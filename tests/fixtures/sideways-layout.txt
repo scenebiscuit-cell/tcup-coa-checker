@@ -1,0 +1,45 @@
+This report relates only to the sample tested. ND=Not Detected, NT=Not Tested. Results are
+available from the lab upon request.
+Lab Director
+ISO 17025 Accreditation # 0000.00 (fictional)
+Mesquite Ridge Labs
+Sunset Drops 300
+Matrix: Ingestible
+Type: Tincture
+Certificate of Analysis
+Batch#:    SD-2610-03
+Retail Product Size:    30 mL
+Retail Serving Size:    1 mL
+Servings:    30
+Sampled:    10/02/26
+Completed:    10/08/26
+PASSED
+SAFETY RESULTS
+Pesticides
+PASSED
+Heavy Metals
+FAILED
+Microbials
+PASSED
+Residuals
+Solvents
+PASSED
+Terpenes
+NOT
+TESTED
+Cannabinoid
+PASSED
+Total THC
+0.95%
+Total THC/Container : 285 mg
+CBD    CBDA    CBG    CBN    D9-THC    D8-THC    THCA
+TOTAL 9(R
+/S)-HHC
+%    9.10    ND    0.12    0.03    0.80    0.15    ND    0.40
+mg/mL    91.0    ND    1.2    0.3    8.0    1.5    ND    4.0
+LOD    0.001    0.001    0.001    0.001    0.001    0.001    0.001    0.001
+Heavy Metals
+FAILED
+Analyte    LOD    Units    Action Level    Pass/Fail    Result
+Lead    0.01    µg/g    0.5    Fail    0.9
+Arsenic    0.01    µg/g    0.2    Pass    ND
