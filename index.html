@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TCUP COA Checker</title>
+<meta name="description" content="Reads a cannabis lab certificate of analysis and flags compliance issues against Texas Compassionate Use Program rules, with a citation for every finding.">
+<meta name="author" content="Nick Lax">
+<meta property="og:title" content="TCUP COA Checker">
+<meta property="og:description" content="Checks a lab COA against Texas Compassionate Use Program rules, with a citation for every finding.">
+<meta property="og:image" content="docs/screenshot-desktop.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23094a52'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='%23b4f0dd' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+
+<header class="band">
+  <div class="band-in gutter">
+    <div>
+      <div class="eyebrow">Texas Compassionate Use Program · Lab COA review</div>
+      <h1>TCUP COA Checker</h1>
+      <p>Paste or upload a certificate of analysis. The checker pulls out potency and contaminant results and tests them against <b>Texas medical cannabis rules</b>, with the citation for every finding.</p>
+    </div>
+    <div class="limits" aria-label="Limits applied">
+      <div class="limit"><b>10 mg</b><span>THC per dosage unit</span><small>HB 46 · 2025</small></div>
+      <div class="limit"><b>1 g</b><span>THC per package or device</span><small>HB 46 · 2025</small></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap gutter">
+  <div class="grid">
+    <!-- INPUT -->
+    <section class="panel" aria-labelledby="in-h">
+      <div class="panel-head"><h2 id="in-h">The COA</h2><span class="eyebrow">Input</span></div>
+      <div>
+        <div class="lbl">Try a sample <span>(fictional labs and products)</span></div>
+        <div class="samples" id="samples"></div>
+      </div>
+      <div>
+        <label class="lbl" for="coa">COA text</label>
+        <textarea id="coa" spellcheck="false" placeholder="Paste the text of a lab COA here"></textarea>
+      </div>
+      <div class="drop" id="drop">
+        <input type="file" id="file" accept=".pdf,.txt,.csv,image/png,image/jpeg,image/webp">
+        <span>Or drop a PDF or text file, or</span>
+        <button type="button" class="linkbtn" id="pick">choose a file</button>
+        <span id="attached"></span>
+      </div>
+      <form class="fetch" id="fetchForm" hidden>
+        <label class="lbl" for="url">Or fetch from a COA link</label>
+        <div class="fetchrow">
+          <input id="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://lab.example.com/coa/NG-2609-221">
+          <button type="submit" class="btn" id="fetchBtn">Fetch</button>
+        </div>
+        <p class="fetchnote">Opens the link in the Claude app's browser and pulls the page text in. The app asks your permission the first time.</p>
+      </form>
+      <details class="localai" id="localBox">
+        <summary><span class="ltitle">Use a local AI model</span><span class="lstate" id="localState">Off</span></summary>
+        <div class="localbody">
+          <p class="fetchnote">Reads any COA layout with a model running on your own computer through <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a>. The COA never leaves your machine. <a href="#ollama-setup">Setup steps</a></p>
+          <div class="localrow">
+            <div class="field"><label for="ollamaUrl">Ollama address</label><input id="ollamaUrl" type="text" spellcheck="false" autocomplete="off" value="http://localhost:11434"></div>
+            <div class="field"><label for="ollamaModel">Model</label><select id="ollamaModel" disabled><option>Connect to list models</option></select></div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn" id="ollamaConnect">Connect</button>
+            <label class="toggle" for="useLocal"><input type="checkbox" id="useLocal" disabled> Use it to read COAs</label>
+          </div>
+          <div class="status" id="ollamaStatus" role="status" aria-live="polite"></div>
+        </div>
+      </details>
+      <div class="actions">
+        <button type="button" class="btn primary" id="run">Check COA</button>
+        <button type="button" class="btn" id="runLocal" hidden>Use built-in parser</button>
+        <button type="button" class="btn" id="stop" hidden>Stop</button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+      <p class="how" id="how"><b>How it works.</b> A parser reads the COA into a fixed set of fields. The compliance calls come from rules written in code, each tied to a statute or rule, so the same COA always gets the same verdict. You can correct any field the reader got wrong. Everything runs in your browser; nothing is uploaded.</p>
+    </section>
+
+    <!-- REPORT -->
+    <section class="panel" aria-labelledby="out-h" id="report">
+      <div class="panel-head"><h2 id="out-h">Compliance report</h2><span class="eyebrow" id="source">—</span></div>
+      <div id="reportBody"><div class="empty">Load a sample or paste a COA to see the report.</div></div>
+    </section>
+  </div>
+
+  <section class="notes" aria-label="Method and sources">
+    <div>
+      <h3>How THC is counted</h3>
+      <p>The statute caps "tetrahydrocannabinols," not just Δ9-THC. Total THC here is <b>Δ9-THC + Δ8-THC + Δ10-THC + THCA × 0.877</b>. Labs often print a Total THC that leaves out Δ8, so the checker sums the individual rows itself.</p>
+    </div>
+    <div>
+      <h3>Rule text vs. statute</h3>
+      <p>Published copies of 37 TAC §12.7(q) still read 0.5% THC and 10% CBD by weight. The legislature has since replaced that standard, most recently with HB 46's <b>10 mg per dosage unit and 1 g per package</b>. Statute controls, so the checker applies the HB 46 limits.</p>
+    </div>
+    <div>
+      <h3>Contaminant limits</h3>
+      <p>TCUP rules list what must be tested but defer to Texas Department of Agriculture standards rather than publishing their own action-limit table. Each result is compared to <b>the limit printed on the COA</b>.</p>
+    </div>
+    <div>
+      <h3>Sources</h3>
+      <ul>
+        <li><a href="https://www.law.cornell.edu/regulations/texas/37-Tex-Admin-Code-SS-12-7" target="_blank" rel="noopener">37 TAC §12.7, Testing, Production, and Packaging</a></li>
+        <li><a href="https://capitol.texas.gov/tlodocs/89R/analysis/html/HB00046S.htm" target="_blank" rel="noopener">HB 46 (89th Leg.) Senate bill analysis</a></li>
+        <li><a href="https://www.dps.texas.gov/section/compassionate-use-program/89th-legislation" target="_blank" rel="noopener">DPS summary of new laws affecting TCUP</a></li>
+        <li><a href="https://vicentellp.com/insights/texas-compassionate-use-program-tcup-overview/" target="_blank" rel="noopener">Vicente LLP, TCUP overview (Jan. 2026)</a></li>
+      </ul>
+    </div>
+    <div id="ollama-setup">
+      <h3>Run with a local model</h3>
+      <p>1. Install <a href="https://ollama.com" target="_blank" rel="noopener">Ollama</a> and run <code>ollama pull qwen2.5:14b</code>. For scanned COAs and photos, also pull a vision model such as <code>qwen2.5vl:7b</code>.</p>
+      <p>2. Let this site talk to Ollama. On Windows, run <code id="originCmd">setx OLLAMA_ORIGINS "https://your-site"</code> in PowerShell, then quit Ollama from the system tray and start it again.</p>
+      <p>3. Open <b>Use a local AI model</b> above and click Connect. If your browser asks to let the site reach apps on this device, allow it.</p>
+    </div>
+    <div>
+      <h3>About this demo</h3>
+      <p>A portfolio prototype, not legal advice or a substitute for DPS guidance. Sample COAs are invented. Rules reflect Texas law as of October 2026.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Created by <b>Nick Lax</b></span>
+    <span>Regulatory compliance × software</span>
+  </footer>
+</main>
+
+<script src="src/core.js"></script>
+<script src="src/samples.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
