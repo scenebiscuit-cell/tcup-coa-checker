@@ -4,8 +4,10 @@ const CORE = (() => {
   /* ---------- cannabinoid names ---------- */
   const CANNABINOIDS = [
     // order matters: most specific first
+    // labs write these as abbreviations (THCA, D9-THC) or chemical names (Tetrahydrocannabinolic acid);
+    // "?" covers PDFs whose Δ glyph extracts as a question mark
     ["thca",   /(tetrahydrocannabinolic|\bthc-?a\b|thc\s*acid)/i, "THCA"],
-    ["thcva",  /\bthcv-?a\b/i, "THCVA"],
+    ["thcva",  /\bthcv-?a\b|tetrahydrocannabivarinic/i, "THCVA"],
     ["thcv",   /\bthcv\b|tetrahydrocannabivarin/i, "THCV"],
     ["hhco",   /\bhhc-?o\b/i, "HHC-O"],
     ["hhc",    /\bhhc\b|hexahydrocannabinol/i, "HHC"],
@@ -13,17 +15,21 @@ const CORE = (() => {
     ["thcp",   /\bthc-?p\b|tetrahydrocannabiphorol/i, "THCP"],
     ["thcjd",  /\bthc-?jd\b/i, "THC-JD"],
     ["thch",   /\bthc-?h\b/i, "THC-H"],
-    ["d8",     /(δ|∆|d|delta)\s*-?\s*8/i, "Δ8-THC"],
-    ["d10",    /(δ|∆|d|delta)\s*-?\s*10/i, "Δ10-THC"],
+    ["d8",     /(δ|∆|\bd|delta|\?)\s*-?\s*8(?!\d)/i, "Δ8-THC"],
+    ["d10",    /(δ|∆|\bd|delta|\?)\s*-?\s*10(?!\d)/i, "Δ10-THC"],
     ["exo",    /exo-?thc/i, "exo-THC"],
-    ["d9",     /(δ|∆|d|delta)\s*-?\s*9|^\s*thc\s*$|tetrahydrocannabinol/i, "Δ9-THC"],
+    ["d9",     /(δ|∆|\bd|delta|\?)\s*-?\s*9(?!\d)|^\s*thc\s*$|tetrahydrocannabinol/i, "Δ9-THC"],
+    ["cbdva",  /\bcbdv-?a\b|cannabidivarinic/i, "CBDVA"],
+    ["cbdv",   /\bcbdv\b|cannabidivarin/i, "CBDV"],
     ["cbda",   /\bcbd-?a\b|cannabidiolic/i, "CBDA"],
-    ["cbdv",   /\bcbdv\b/i, "CBDV"],
     ["cbd",    /\bcbd\b|cannabidiol/i, "CBD"],
-    ["cbga",   /\bcbg-?a\b/i, "CBGA"],
+    ["cbga",   /\bcbg-?a\b|cannabigerolic/i, "CBGA"],
     ["cbg",    /\bcbg\b|cannabigerol/i, "CBG"],
+    ["cbna",   /\bcbn-?a\b|cannabinolic/i, "CBNA"],
     ["cbn",    /\bcbn\b|cannabinol/i, "CBN"],
+    ["cbca",   /\bcbc-?a\b|cannabichromenic/i, "CBCA"],
     ["cbc",    /\bcbc\b|cannabichromene/i, "CBC"],
+    ["cbl",    /\bcbl\b|cannabicyclol/i, "CBL"],
   ];
   // contribution of each to "tetrahydrocannabinols"
   const THC_WEIGHT = { d9: 1, d8: 1, d10: 1, exo: 1, thca: 0.877 };
@@ -78,7 +84,7 @@ const CORE = (() => {
     ["microbials", /microb|yeast|mold|mould|bacteria|pathogen/i],
     ["heavy_metals", /heavy\s*metal|metals|elemental/i],
     ["moisture", /moisture|water activity/i],
-    ["foreign_matter", /foreign/i],
+    ["foreign_matter", /foreign|filth/i],
     ["terpenes", /terpene/i],
     ["potency", /cannabinoid|potency/i],
   ];
@@ -94,22 +100,121 @@ const CORE = (() => {
   };
 
   /* ---------- built-in text parser (no AI) ----------
-     Handles the simple "Label: value" + vertical-table layout, and common real-lab layouts:
-     test names with PASSED/FAILED on the next line, sideways cannabinoid tables
-     (names in one row, a % or mg/g row underneath), and tables with their own column order. */
-  const STATUS_LINE = /^(passed|pass|failed|fail|not tested|n\/?t|not)$/i;
-  const UNIT_LABEL = /^(%|mg\/g|mg\/ml|mg\/unit|mg\/serving|mg\/pkg|mg\/package|mg\/container)$/i;
-  const isCannName = (c) => c.length < 24 && !/\d{3,}/.test(c) && /(thc|cbd|cbg|cbn|cbc|cbl|hhc|cannabi)/i.test(c);
-  const statusOf = (s) => /fail/i.test(s) ? "fail" : /pass/i.test(s) ? "pass" : /n\/?t|not/i.test(s) ? "not tested" : "reported";
+     Labs don't share a COA layout, so the parser doesn't expect one. It looks for patterns that recur
+     across labs and tries each in turn:
+       • "Label: value" fields, including two side by side on one line, or the value on the next line
+       • section headers with a status ("HEAVY METALS — PASS", "Pesticides Pass", or PASSED on the next line)
+       • summary rows ("Pesticides Pass  Heavy Metals Pass ...") and summary grids (names over statuses)
+       • sideways cannabinoid tables (names in one row, a % or mg/g row under them)
+       • tables whose header row sets the column order, including potency tables with LOD/LOQ columns
+         and several result columns in different units
+       • rows separated by single spaces (text copied from a PDF viewer), split by reading values from the end
+       • CSV exports
+     Anything it can't place is left out; the self-checks and the editable "as read" table catch the gaps. */
+  const STATUS_LINE = /^(passed|pass|failed|fail|not tested|n\/?t|not|n\/a|not required|not analy[sz]ed|not requested|not performed|complete)$/i;
+  const STATUS_WORD = /^(passed|pass|failed|fail|not tested|n\/?t|n\/a|not required|not analy[sz]ed|not requested|not performed|complete|tested)$/i;
+  const UNIT_LABEL = /^(%|mg\/g|mg\/ml|mg\/unit|mg\/serving|mg\/pkg|mg\/package|mg\/container|mg\/each|mg\/piece|mg\/dose)$/i;
+  const UNITS = "%|wt%|%w\\/w|ppm|ppb|ppt|[µμu]g\\/g|[µμu]g\\/kg|ng\\/g|mg\\/kg|mg\\/g|mg\\/ml|mg\\/l|cfu\\/g|cfu\\/ml|mpn\\/g|aw|mg|g|ml|mg\\/unit|mg\\/serving|mg\\/pkg|mg\\/package|mg\\/container|mg\\/each|mg\\/piece|mg\\/dose";
+  const UNIT_ONLY = new RegExp(`^(?:${UNITS})$`, "i");
+  const VALUE_TOKEN = new RegExp(
+    `^(?:[<>≤≥]=?)?[-+]?(?:\\d[\\d,]*\\.?\\d*|\\.\\d+)(?:e-?\\d+)?(?:\\s*(?:${UNITS}))?$` +
+    `|^(?:${UNITS})$` +
+    "|^(?:nd|n\\.d\\.|nt|n\\/t|n\\/a|na|bql|bdl|<?lo[qd]|absent|present|negative|positive|pass(?:ed)?|fail(?:ed)?|detected|tested|ok|—|-)$" +
+    "|^(?:not detected|none detected|not tested|not present|not required|not analy[sz]ed|(?:absent|detected|present|not detected) in \\d+(?:\\.\\d+)? ?(?:g|ml|grams?))$", "i");
+  const NOISE_NAME = /^(page|date|signature|license|lab director|this report|report|results? (?:are|relate)|sample size|ordered|completed)\b|:/i;
+  const isCannName = (c) => c.length < 48 && !/\d{3,}/.test(c) && /(thc|cbd|cbg|cbn|cbc|cbl|hhc|cannabi)/i.test(c);
+  const statusOf = (s) => /fail/i.test(s) ? "fail" : /pass/i.test(s) ? "pass" : /n\/?t\b|n\/a|^not/i.test(s) ? "not tested" : "reported";
+  // a section name on its own, so "Pesticides Pass" is a header but "Total Yeast and Mold Pass" is a result row
+  const SECTION_NAME = /^(?:(?:residual\s+)?solvents?|residuals?\s+solvents?|pesticides?(?:\s*(?:&|and|\/)\s*(?:fungicides?|herbicides?|plant growth regulators?))?|fungicides?|heavy\s+metals|metals|elemental(?:\s+impurities)?|microbials?|microbiology|microbial\s+contaminants|mycotoxins?|moisture(?:\s+content)?|water\s+activity|foreign\s+(?:matter|material)|filth(?:\s*(?:&|and)\s*foreign\s+material)?|terpenes?|cannabinoids?|potency|cannabinoid\s+profile)(?:\s+(?:analysis|screen(?:ing)?|test(?:ing)?|panel|profile|results?|summary))?(?:\s*\(.*\))?$/i;
+  // field labels; used to split two fields printed on one line ("Batch: A1  Sampled: 10/2")
+  const LABEL_NAMES = [
+    "laborator(?:y|ies)", "lab name", "testing lab(?:oratory)?", "lab", "accreditation(?: #| no\\.?| number)?", "client", "customer", "licensee",
+    "distributor", "manufacturer", "producer", "cultivator", "dispensing organization",
+    "product name", "sample name", "product", "sample", "sample id", "laboratory sample id", "product form", "dosage form", "product type",
+    "type", "form", "category", "sample type", "product category", "matrix", "sample matrix", "classification", "production method",
+    "batch(?: id| no\\.?| number| #)?", "lot(?: id| no\\.?| number| #)?", "harvest\\s*\\/\\s*lot id", "source package(?: id)?", "package id",
+    "metrc(?: id| tag| package(?: id)?)?", "seed to sale ?#?",
+    "(?:units?|servings?|pieces?|doses?) ?(?:per|\\/) ?(?:package|container|pkg|unit)", "servings", "units", "pieces", "count", "doses",
+    "(?:number|#) of (?:servings|units|pieces|doses)", "unit count",
+    "(?:retail )?(?:dosage unit size|unit size|unit weight|serving size|dose size|piece weight|serving weight|unit mass)",
+    "net (?:wt\\.?|weight|contents?|volume|quantity)", "(?:retail )?(?:product|package|container) size", "total amount", "sample size(?: received)?",
+    "date (?:collected|sampled|received|tested|reported|issued|completed|of analysis|analy[sz]ed|produced)",
+    "(?:collected|sampled|received|tested|reported|issued|completed)(?: on| date)?", "ordered", "test date", "report date", "analysis date",
+    "analy[sz]ed(?: date)?", "license ?(?:#|no\\.?|number)?",
+  ];
+  const LABEL_AT = new RegExp(`\\s+(?=(?:${LABEL_NAMES.join("|")})\\s*#?\\s*:)`, "i");
+  const LABEL_WHOLE = new RegExp(`^(?:${LABEL_NAMES.join("|")})$`, "i");
+  const HEADER_FIRST = /^(analytes?|compounds?(?: name)?|names?|tests?(?: name)?|parameters?|cannabinoids?|components?|targets?|pesticides?|solvents?|metals?|elements?|organisms?|mycotoxins?|microbes?|contaminants?)$/i;
+  const RESULTISH = /result|amount|mass|conc|value|measured|found|level|limit|^%$|mg\/|[µμu]g\//i;
 
   function sizeOf(s) {
     if (!s) return [null, null];
-    const v = num(s);
-    const u = (String(s).match(/\b(ml|millilit\w*|mg|milligrams?|g|grams?|gr)\b/i) || [])[1];
-    if (v === null || !u) return [v, null];
+    // prefer a number with a unit right after it: "1 gummy (4.5 g)" is 4.5 g, not 1
+    const m = String(s).replace(/,/g, "").match(/(\d*\.?\d+)\s*(ml|millilit\w*|mg|milligrams?|g|grams?|gr)\b/i);
+    if (!m) return [num(s), null];
+    const v = parseFloat(m[1]), u = m[2];
     if (/^ml|^millil/i.test(u)) return [v, "mL"];
     if (/^mg|^milligram/i.test(u)) return [v / 1000, "g"];
     return [v, "g"];
+  }
+
+  // CSV exports: turn rows into tab-separated cells, and two-cell label rows into "Label: value"
+  function fromCsv(text) {
+    const rows = String(text || "").split(/\r?\n/);
+    const filled = rows.filter(r => r.trim());
+    if (filled.length < 4 || filled.filter(r => /,/.test(r)).length < filled.length * 0.7) return text;
+    const cellsOfRow = (r) => {
+      const cellsOut = []; let cur = "", q = false;
+      for (let i = 0; i < r.length; i++) {
+        const ch = r[i];
+        if (ch === '"') { if (q && r[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+        else if (ch === "," && !q) { cellsOut.push(cur.trim()); cur = ""; }
+        else cur += ch;
+      }
+      cellsOut.push(cur.trim());
+      return cellsOut;
+    };
+    // long format with a section column: "Section,Analyte,Result,Unit,Limit,Status" becomes a header line per
+    // section followed by that section's table, which the normal table reader already handles
+    let sect = null, lastSect = null;
+    const out = [];
+    rows.forEach(r => {
+      const raw = cellsOfRow(r);
+      if (!sect && raw.length >= 3 && /^(section|category|panel|test(?: type)?|assay)$/i.test(raw[0]) && HEADER_FIRST.test(raw[1])) {
+        sect = { n: raw.length, head: raw.slice(1).join("\t") }; return;
+      }
+      if (sect && raw.length >= 3 && raw[0] && raw[1]) {
+        if (raw[0] !== lastSect) { out.push("", raw[0], sect.head); lastSect = raw[0]; }
+        const cells = raw.slice(1);
+        while (cells.length < sect.n - 1) cells.push("");
+        out.push(cells.map(c => c || "—").join("\t"));
+        return;
+      }
+      const c = raw.filter(Boolean);
+      if (c.length === 2 && LABEL_WHOLE.test(c[0].replace(/[:#]\s*$/, ""))) out.push(`${c[0].replace(/[:#]\s*$/, "")}: ${c[1]}`);
+      else out.push(c.join("\t"));
+    });
+    return out.join("\n");
+  }
+
+  // join the text pieces pdf.js reports for one line, using their positions:
+  // pieces that touch are one word, a normal gap is a space, a wide gap is a column break
+  function joinLine(items) {
+    let line = "", end = null, h = 0;
+    for (const it of items) {
+      const s = String(it.str || "");
+      if (!s.trim()) continue;   // pdf.js fills gaps with space pieces; measure the real gap instead
+      if (end !== null) {
+        const fs = Math.max(it.h || 0, h, 4), gap = (it.x ?? 0) - end;
+        const sep = !isFinite(gap) || it.w == null ? "   " : gap > fs * 0.9 ? "   " : gap > fs * 0.12 ? " " : "";
+        if (sep === "   ") line = line.trimEnd() + sep;
+        else if (sep === " " && !line.endsWith(" ") && !s.startsWith(" ")) line += " ";
+      }
+      line += s;
+      end = it.w != null ? (it.x ?? 0) + it.w : null;
+      h = it.h || h;
+    }
+    return line.trimEnd();
   }
 
   function parseText(text) {
@@ -120,11 +225,74 @@ const CORE = (() => {
       dates: { collected: null, tested: null, reported: null },
       cannabinoids: [], reported_totals: { total_thc: null, total_cbd: null }, panels: [],
     };
-    const lines = String(text || "").split(/\r?\n/).map(l => l.replace(/ /g, " ").trimEnd());
+    const lines = fromCsv(text).split(/\r?\n/).map(l => l.replace(/[   ]/g, " ").trimEnd());
     const split = (l) => l.trim().split(/\t+|\s*\|\s*|\s{2,}/).filter(Boolean);
+
+    // cells of a table row. Wide gaps, tabs, and pipes separate cells. Without them (single spaces),
+    // read value-like tokens off the end of the line; whatever is left is the name.
+    const PROTECT = /\b(not detected|none detected|not tested|not present|not required|not analy[sz]ed|absent|detected|present)\s+in\s+\d+(?:\.\d+)?\s*(?:g|ml|grams?)\b|\b(?:not detected|none detected|not tested|not present|not required|not analy[sz]ed)\b/gi;
+    function cellsOf(l) {
+      const wide = split(l);
+      const t = l.trim();
+      if (wide.length > 1 || !/\s/.test(t)) return wide.map(c => c.replace(/^([<>≤≥])\s+/, "$1"));
+      const toks = t.replace(/([<>≤≥])\s+(?=[\d.]|lo[qd])/gi, "$1").replace(PROTECT, m => m.replace(/\s+/g, "⁣"))
+        .split(/\s+/).map(x => x.replace(/⁣/g, " "));
+      // a header row: "Analyte LOQ (mg/g) Result (mg/g) Action Level Status"
+      if (HEADER_FIRST.test(toks[0]) || HEADER_FIRST.test(toks.slice(0, 2).join(" "))) {
+        const h = [];
+        toks.forEach((x, i) => {
+          const prev = h[h.length - 1];
+          if (i === 1 && /^name$/i.test(x)) h[0] += " " + x;
+          else if (prev && (/^\(/.test(x) || (/^(levels?|limits?)$/i.test(x) && /^(action|max(imum)?|allowable|regulatory|state)$/i.test(prev)) || /^\/?fail$/i.test(x) && /^pass\/?$/i.test(prev)))
+            h[h.length - 1] = prev + (/^\(/.test(x) ? " " : prev.endsWith("/") || x.startsWith("/") ? "" : " ") + x;
+          else h.push(x);
+        });
+        if (h.slice(1).some(c => RESULTISH.test(c) || /^lo[dq]/i.test(c))) return h;
+      }
+      // a sideways cannabinoid name row with single spaces
+      if (toks.length >= 4 && toks.every(isCannName)) return toks;
+      let k = toks.length;
+      while (k > 0 && VALUE_TOKEN.test(toks[k - 1])) k--;
+      if (k === toks.length) return wide;
+      const tail = toks.slice(k);
+      return k === 0 ? tail : [toks.slice(0, k).join(" "), ...tail];
+    }
+
+    /* "Label: value" fields. Lines are cut into segments at wide gaps and in front of known labels,
+       and a label with nothing after it takes its value from the next line. */
+    const LABEL_START = /^[A-Za-z][^:]{0,39}:/;
+    // cut in front of a known label, but only once a "label:" has been seen ("Sample Size Received:" stays whole)
+    const splitLabels = (p) => {
+      if (!LABEL_START.test(p)) return [p];
+      const out = []; let m;
+      const re = new RegExp(LABEL_AT.source, "gi");
+      let last = 0;
+      while ((m = re.exec(p))) {
+        if (!p.slice(last, m.index).includes(":")) continue;
+        out.push(p.slice(last, m.index)); last = m.index + m[0].length;
+      }
+      out.push(p.slice(last));
+      return out.map(x => x.trim()).filter(Boolean);
+    };
+    const segs = [];
+    lines.forEach((l, i) => {
+      // a wide gap starts a new segment only when a new label follows it ("Batch:   A1" stays whole)
+      const parts = [];
+      l.trim().split(/\t+|\s*\|\s*|\s{2,}/).filter(Boolean).forEach(p => {
+        if (!parts.length || LABEL_START.test(p)) parts.push(p); else parts[parts.length - 1] += "   " + p;
+      });
+      parts.splice(0, parts.length, ...parts.flatMap(splitLabels));
+      parts.forEach((p, j) => {
+        if (/^[A-Za-z][^:]{0,39}:\s*$/.test(p) && j === parts.length - 1) {
+          const nx = (lines[i + 1] || "").trim().split(/\t+|\s{2,}/)[0] || "";
+          if (nx && !LABEL_START.test(nx)) { segs.push(p + " " + nx); return; }
+        }
+        segs.push(p);
+      });
+    });
     // first match wins, trying each pattern in priority order; value stops at a wide gap
     const field = (...res) => {
-      for (const re of res) for (const l of lines) {
+      for (const re of res) for (const l of segs) {
         const m = l.match(re);
         if (m) { const v = m[m.length - 1].trim().split(/\s{2,}|\t/)[0].trim(); if (v) return v; }
       }
@@ -137,12 +305,12 @@ const CORE = (() => {
     if (!out.lab.name) {
       labIdx = lines.findIndex(l => { const t = l.trim();
         return t && t.length <= 60 && !t.includes(":") && /^[A-Z0-9]/.test(t) && !/[.,;]$/.test(t)
-          && /\b(labs?|laborator(y|ies)|analytical|testing)\b/i.test(t)
+          && /\b(labs?|laborator(y|ies)|analytical|analytics|testing)\b/i.test(t)
           && !/director|manager|license|accredit|sample id|report|certificate|method|signature|tested|results/i.test(t); });
       if (labIdx !== -1) out.lab.name = lines[labIdx].trim();
     } else labIdx = lines.findIndex(l => l.includes(out.lab.name));
     out.lab.accreditation = field(/^\s*(accreditation[^:]*)\s*:\s*(.+)$/i, /(iso\s*\/?\s*(?:iec\s*)?17025\b.*)$/i);
-    out.client = field(/^\s*(client|customer|licensee|dispensing organization|distributor|manufacturer)\s*:\s*(.+)$/i);
+    out.client = field(/^\s*(client|customer|licensee|dispensing organization|distributor|manufacturer|producer|cultivator)\s*:\s*(.+)$/i);
 
     /* product */
     out.product.name = field(/^\s*(product name|sample name|product)\s*:\s*(.+)$/i);
@@ -152,46 +320,69 @@ const CORE = (() => {
     }
     if (!out.product.name) out.product.name = field(/^\s*(sample)\s*:\s*(.+)$/i);
     out.product.form = field(/^\s*(product form|dosage form)\s*:\s*(.+)$/i, /^\s*(product type|type|form)\s*:\s*(.+)$/i,
-      /^\s*(category|sample type|product category)\s*:\s*(.+)$/i, /^\s*(matrix)\s*:\s*(.+)$/i);
+      /^\s*(category|sample type|product category)\s*:\s*(.+)$/i, /^\s*(matrix|sample matrix)\s*:\s*(.+)$/i);
     out.product.batch = field(/^\s*(batch(?:\s*(?:id|no\.?|number|#))?)\s*[:#]\s*(.+)$/i,
-      /^\s*(lot(?:\s*(?:id|no\.?|number|#))?)\s*[:#]\s*(.+)$/i, /^\s*(harvest\s*\/\s*lot\s*id)\s*:\s*(.+)$/i);
+      /^\s*(lot(?:\s*(?:id|no\.?|number|#))?)\s*[:#]\s*(.+)$/i, /^\s*(harvest\s*\/\s*lot\s*id)\s*:\s*(.+)$/i,
+      /^\s*(source package(?: id)?|package id|metrc(?: id| tag| package(?: id)?)?)\s*:\s*(.+)$/i);
     out.product.units_per_package = num(field(
       /^\s*(units?|servings?|doses?|pieces?)\s*(per|\/)\s*(package|container|pkg|unit)\s*:\s*(.+)$/i,
+      /^\s*((?:number|#) of (?:servings|units|pieces|doses)|unit count)\s*:\s*(.+)$/i,
       /^\s*(servings|units|pieces|count|doses)\s*:\s*(.+)$/i));
     [out.product.unit_size, out.product.unit_size_unit] = sizeOf(field(
-      /^\s*(?:retail\s+)?(dosage unit size|unit size|unit weight|serving size|dose size|piece weight)\s*:\s*(.+)$/i));
+      /^\s*(?:retail\s+)?(dosage unit size|unit size|unit weight|serving size|dose size|piece weight|serving weight|unit mass)\s*:\s*(.+)$/i));
     [out.product.net_content, out.product.net_content_unit] = sizeOf(field(
       /^\s*(net (?:wt\.?|weight|contents?|volume|quantity)|(?:retail\s+)?(?:product|package|container) size)\s*:\s*(.+)$/i));
 
     /* dates */
-    out.dates.collected = field(/^\s*(date (?:collected|sampled|received)|collected|sampled|received)\s*:\s*(.+)$/i);
-    out.dates.tested = field(/^\s*(date tested|test date|tested|date of analysis|date analy[sz]ed|analy[sz]ed(?: date)?)\s*:\s*(.+)$/i);
-    out.dates.reported = field(/^\s*(date reported|report date|reported|date issued|issued|completed|date completed)\s*:\s*(.+)$/i);
+    out.dates.collected = field(/^\s*(date (?:collected|sampled|received)|(?:collected|sampled|received)(?: on| date)?)\s*:\s*(.+)$/i);
+    out.dates.tested = field(/^\s*(date tested|test date|tested(?: on)?|date of analysis|analysis date|date analy[sz]ed|analy[sz]ed(?: date| on)?)\s*:\s*(.+)$/i);
+    out.dates.reported = field(/^\s*(date reported|report date|reported(?: on)?|date issued|issued(?: on)?|completed(?: on)?|date completed)\s*:\s*(.+)$/i);
 
     /* results */
     let current = null, colMap = null;
     const panelFor = (cat, name, status) => {
       let p = out.panels.find(x => x.category === cat);
       if (!p) { p = { category: cat, name, status, analytes: [] }; out.panels.push(p); }
-      else if (status === "fail") p.status = "fail";
+      else if (status === "fail" || (p.status === "reported" && status && status !== "reported")) p.status = status;
       return p;
     };
     const setTotal = (which, value, unit) => { if (!out.reported_totals[which] && value !== null) out.reported_totals[which] = { value, unit }; };
+    const POT_ORDER = ["mg/unit", "mg/pkg", "mg/mL", "mg/g", "%"];
+    const unitIn = (h) => { const m = String(h).match(new RegExp(`(?:^|\\(|\\s)(${UNITS})(?:\\)|$|\\s)`, "i")); return m ? m[1] : null; };
+    // pick the potency cell to use from a row, given the table header: best unit first
+    const potencyCell = (row) => {
+      // units written beside values ("2.18 mg/g 9.81 mg/serving") would shift the columns, so drop them first
+      const cells = row.length > colMap.n ? row.filter((c, i) => i === 0 || !UNIT_ONLY.test(c)) : row;
+      const off = cells.length - colMap.n;
+      const found = colMap.cands.map(c => ({ raw: cells[c.idx + off], unit: normUnit(c.unit) }))
+        .filter(c => c.raw != null && /^(nd|n\.d\.|<|\d|\.)/i.test(c.raw));
+      found.sort((a, b) => (POT_ORDER.indexOf(a.unit) + 1 || 99) - (POT_ORDER.indexOf(b.unit) + 1 || 99));
+      const best = found[0];
+      if (best && !best.unit) best.unit = normUnit(cells.find(x => UNIT_LABEL.test(x)) || (/%$/.test(best.raw) ? "%" : "")) || null;
+      return best || null;
+    };
+    const TOTAL = /^(?:total\s*(?:potential\s*|active\s*|available\s*)?(?:(?:δ|∆|delta|d)\s*-?\s*9\s*-?\s*)?(thc|cbd)|max(?:imum)?\s*(thc|cbd)|(thc|cbd)\s*total)\b(.*)$/i;
 
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i].trim();
       if (!l) continue;
-      const cells = split(l);
+      const cells = cellsOf(l);
 
       // "Label Claim" style tables restate potency in other units; skip their rows
       if (/^label claim\b/i.test(l)) { current = null; colMap = null; continue; }
 
-      // reported totals, in either layout: "Total THC  9.58  mg/mL" or "Total THC" + "0.0581%"
-      const tm = l.match(/^total\s*(thc|cbd)\b(.*)$/i);
+      // reported totals: "Total THC  9.58  mg/mL", "Total THC" + "0.0581%", "Total Δ9-THC: 2.1 %", "Max THC 21.4%"
+      const tm = l.match(TOTAL);
       if (tm) {
-        const which = tm[1].toLowerCase() === "thc" ? "total_thc" : "total_cbd";
-        const perPkg = /container|package|pkg/i.test(tm[2]), perUnit = /serving|unit|dose/i.test(tm[2]);
-        let rest = tm[2].replace(/^[\s/a-z]*:?/i, "").trim();
+        const which = (tm[1] || tm[2] || tm[3]).toLowerCase() === "thc" ? "total_thc" : "total_cbd";
+        const tail = tm[4] || "";
+        const perPkg = /container|package|pkg/i.test(tail), perUnit = /serving|unit|dose/i.test(tail);
+        if (colMap?.pot && cells.length > 1) {
+          const c = potencyCell(cells);
+          if (c) { setTotal(which, num(c.raw), c.unit); continue; }
+        }
+        let rest = tail.replace(/^[\s/a-z()*.+×0-9]*?(?=[:\s]*[<\d.])/i, "").replace(/^[\s:]+/, "").trim();
+        if (!/^[<\d.]/.test(rest)) rest = "";
         if (!rest && /^[<\d.]/.test((lines[i + 1] || "").trim())) { rest = lines[i + 1].trim(); i++; }
         const restCells = split(rest);
         const unitTxt = (rest.match(/(%|mg\/g|mg\/ml|mg)\b|%/i) || [])[0] || restCells[1] || "";
@@ -201,10 +392,30 @@ const CORE = (() => {
         continue;
       }
 
-      // one-line section header: "HEAVY METALS — PASS", "Pesticides: Pass", "CANNABINOIDS (HPLC)"
-      const header = l.match(/^([A-Za-z][A-Za-z0-9 &/,()\-]+?)\s*(?:—|–|-{1,2}|:)\s*(pass|fail|not tested|passed|failed|n\/?t|tested|reported)\s*$/i)
-        || (/^[A-Z0-9 &/,()\-]{6,}$/.test(l) && !/\d{2,}/.test(l) ? [l, l, null] : null)
-        || (/^(cannabinoids?|potency)\b/i.test(l) && cells.length === 1 ? [l, l, null] : null);
+      // a summary row with several "Section Status" pairs: "Pesticides Pass  Heavy Metals Pass  Microbials Fail"
+      const pairs = [...l.matchAll(/([A-Za-z][A-Za-z &/]*?)\s*(?:[:\-–—]\s*)?\b(passed|pass|failed|fail|not tested|n\/t)\b/gi)]
+        .map(m => ({ name: m[1].trim(), cat: categoryOf(m[1]), status: statusOf(m[2]) })).filter(p => p.cat !== "other");
+      if (pairs.length >= 2 && !/\d/.test(l.replace(/\b[a-z]\d\b/gi, ""))) {
+        pairs.forEach(p => { if (p.cat !== "potency") panelFor(p.cat, p.name, p.status); });
+        continue;
+      }
+
+      // a summary grid: a row of section names, then a row of statuses
+      if (cells.length >= 2 && cells.every(c => SECTION_NAME.test(c))) {
+        let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
+        const st = j < lines.length ? split(lines[j]) : [];
+        if (st.length === cells.length && st.every(c => STATUS_WORD.test(c) || /^not tested$/i.test(c))) {
+          cells.forEach((c, idx) => { const cat = categoryOf(c); if (cat !== "potency") panelFor(cat, c, statusOf(st[idx])); });
+          i = j; continue;
+        }
+      }
+
+      // one-line section header: "HEAVY METALS — PASS", "Pesticides: Pass", "Microbials Pass", "CANNABINOIDS (HPLC)"
+      let header = l.match(/^([A-Za-z][A-Za-z0-9 &/,()\-]+?)\s*(?:—|–|-{1,2}|:)\s*(pass|fail|not tested|passed|failed|n\/?t|tested|reported|complete)\s*$/i);
+      if (!header) { const m = l.match(/^(.+?)\s+(passed|pass|failed|fail|not tested|n\/t)$/i); if (m && SECTION_NAME.test(m[1].trim())) header = m; }
+      if (!header && SECTION_NAME.test(l)) header = [l, l, null];
+      if (!header && /^[A-Z0-9 &/,()\-]{6,}$/.test(l) && !/\d{2,}/.test(l)) header = [l, l, null];
+      if (!header && /^(cannabinoids?|potency)\b/i.test(l) && cells.length === 1) header = [l, l, null];
       if (header && !/\s{2,}|\t|\|/.test(header[1]) && categoryOf(header[1].replace(/\(.*?\)/g, "")) !== "other") {
         const cat = categoryOf(header[1].replace(/\(.*?\)/g, ""));
         colMap = null;
@@ -234,11 +445,11 @@ const CORE = (() => {
       // sideways cannabinoid table: a row of names, then rows that start with a unit label
       if (cells.length >= 4 && cells.filter(isCannName).length >= cells.length * 0.8 && !cells.some(c => /^[<\d.]+$/.test(c))) {
         let names = [...cells], k = i + 1;
-        while (k < lines.length && !UNIT_LABEL.test(split(lines[k])[0] || "")) {
+        while (k < lines.length && !UNIT_LABEL.test(cellsOf(lines[k])[0] || "")) {
           const c = split(lines[k]);
           if (!c.length) { k++; continue; }
           if (c.some(x => /^[<\d.]+$/.test(x)) || c.length > 8) break;
-          if (c.length === 1 && k + 1 < lines.length && !UNIT_LABEL.test(split(lines[k + 1])[0] || "")) {
+          if (c.length === 1 && k + 1 < lines.length && !UNIT_LABEL.test(cellsOf(lines[k + 1])[0] || "")) {
             const nx = split(lines[k + 1]);                 // a wrapped cell: "THC-O-ACE" + "TATE ..."
             names.push(c[0] + nx[0], ...nx.slice(1)); k += 2; continue;
           }
@@ -246,13 +457,13 @@ const CORE = (() => {
         }
         const rows = {};
         while (k < lines.length) {
-          const c = split(lines[k]);
+          const c = cellsOf(lines[k]);
           if (!c.length || !UNIT_LABEL.test(c[0])) break;
           const u = normUnit(c[0]);
           if (c.slice(1).some(x => /^(nd|<|\d)/i.test(x)) && !rows[u]) rows[u] = c.slice(1);
           k++;
         }
-        const pick = ["mg/unit", "mg/pkg", "mg/mL", "mg/g", "%"].find(u => rows[u]);
+        const pick = POT_ORDER.find(u => rows[u]);
         if (pick) {
           names.forEach((n, idx) => { const raw = rows[pick][idx]; if (raw != null) out.cannabinoids.push({ name: n, value: num(raw), raw, unit: pick }); });
           current = { category: "potency" }; colMap = null; i = k - 1; continue;
@@ -263,25 +474,46 @@ const CORE = (() => {
       if (cells.length < 2) continue;
 
       // a table's own header row tells us its column order
-      if (/^(analyte|compound|name|test|parameter)$/i.test(cells[0])) {
-        const m = { n: cells.length };
+      if (HEADER_FIRST.test(cells[0]) && cells.slice(1).some(c => RESULTISH.test(c) || /^lo[dq]/i.test(c))) {
+        const m = { n: cells.length, cands: [], pot: current.category === "potency" };
         cells.forEach((h, idx) => {
-          if (/^result/i.test(h)) m.result = idx;
-          else if (/limit|action|max|threshold|spec/i.test(h) && !/^lo[dq]/i.test(h)) m.limit = idx;
+          if (idx === 0) return;
+          const hu = unitIn(h);
+          if (/^lo[dq]\b|^lo[dq]$|\blo[dq]\b|uncert|^mu\b|dilution|^rpd|^ref/i.test(h)) return;
+          if (/limit|action|max|threshold|spec|allow/i.test(h)) { m.limit = idx; m.limitUnit = hu; }
           else if (/^units?$/i.test(h)) m.unit = idx;
-          else if (/pass|fail|status/i.test(h)) m.status = idx;
+          else if (/pass|fail|status|result\s*status/i.test(h) && !/^result\b(?!\s*status)/i.test(h)) m.status = idx;
+          else if (RESULTISH.test(h) || hu) m.cands.push({ idx, unit: hu });
         });
-        colMap = m.result != null ? m : null;
+        // a units row under the header: "Analyte  LOQ  Mass  Mass" / "%  %  mg/g"
+        let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
+        const ur = j < lines.length ? cellsOf(lines[j]) : [];
+        if (ur.length && ur.every(c => UNIT_ONLY.test(c))) {
+          ur.forEach((u, k) => { const col = m.n - ur.length + k; const c = m.cands.find(x => x.idx === col); if (c) c.unit = u; else if (col === m.limit) m.limitUnit = u; });
+          i = j;
+        }
+        m.result = m.cands[0]?.idx;
+        m.resultUnit = m.cands[0]?.unit || null;
+        colMap = m.cands.length ? m : null;
         continue;
       }
 
       if (current.category === "potency") {
-        const [name, value, unitTxt] = cells;
-        if (/^total/i.test(name) || !isCannName(name) || !/^(nd|n\.d\.|<|\d|\.)/i.test(value)) continue;
-        out.cannabinoids.push({ name, value: num(value), raw: value, unit: normUnit(unitTxt || "") });
+        const name = cells[0];
+        if (/^total/i.test(name) || !isCannName(name) || NOISE_NAME.test(name)) continue;
+        if (colMap?.pot) {
+          const c = potencyCell(cells);
+          if (c) out.cannabinoids.push({ name, value: num(c.raw), raw: c.raw, unit: c.unit });
+          continue;
+        }
+        const value = cells[1];
+        if (!/^(nd|n\.d\.|<|\d|\.)/i.test(value || "")) continue;
+        const unitTxt = cells.slice(2).find(x => UNIT_LABEL.test(x)) || (/%$/.test(value) ? "%" : "");
+        out.cannabinoids.push({ name, value: num(value), raw: value, unit: normUnit(unitTxt) });
         continue;
       }
       if (current.status === "not tested") continue;
+      if (NOISE_NAME.test(cells[0]) || cells[0].length > 70) continue;
       let a;
       if (colMap) {
         const full = cells.length === colMap.n;
@@ -289,12 +521,18 @@ const CORE = (() => {
         const st = cells.find((c, idx) => idx > 0 && /^(pass|fail)/i.test(c));
         a = { name: cells[0], result: cells[resultIdx] ?? null,
               limit: full && colMap.limit != null ? cells[colMap.limit] : null,
-              unit: (full && colMap.unit != null ? cells[colMap.unit] : cells.find(c => /^(ppm|ppb|µg\/g|ug\/g|mg\/kg|cfu\/g|%|aw)$/i.test(c))) ?? null,
+              unit: (full && colMap.unit != null ? cells[colMap.unit] : cells.find(c => UNIT_ONLY.test(c) && !/^(mg|g|ml)$/i.test(c))) ?? colMap.resultUnit ?? colMap.limitUnit ?? null,
               status: st ? statusOf(st) : null };
       } else {
-        const [name, result, limit, unit, status] = cells;
-        a = { name, result: result ?? null, limit: limit ?? null, unit: unit ?? null, status: status ? (/^(pass|fail)/i.test(status) ? statusOf(status) : status.toLowerCase()) : null };
+        // no header: name, then the result, then (if present) the limit; units and pass/fail can sit anywhere
+        const rest = cells.slice(1);
+        const st = rest.find(c => /^(pass|fail)/i.test(c));
+        const unit = rest.find(c => UNIT_ONLY.test(c) && !/^(mg|g|ml)$/i.test(c));
+        const vals = rest.filter(c => c !== st && c !== unit);
+        if (!vals.length) continue;
+        a = { name: cells[0], result: vals[0] ?? null, limit: vals[1] ?? null, unit: unit ?? null, status: st ? statusOf(st) : null };
       }
+      for (const k of ["result", "limit", "unit"]) if (/^[—–-]$/.test(a[k] || "")) a[k] = null;
       if (a.status === "fail" && current.status !== "fail") current.status = "fail";
       current.analytes.push(a);
     }
@@ -450,10 +688,10 @@ ${coaText}
   /* ---------- the rules ---------- */
   const CITE = {
     panel: { text: "37 TAC §12.7(b)", url: "https://www.law.cornell.edu/regulations/texas/37-Tex-Admin-Code-SS-12-7" },
-    dose: { text: "Occ. Code §169.001(3), as amended by HB 46 (2025)", url: "https://capitol.texas.gov/tlodocs/89R/analysis/html/HB00046S.htm" },
-    pkg: { text: "Health & Safety Code ch. 487, as amended by HB 46 (2025)", url: "https://capitol.texas.gov/tlodocs/89R/analysis/html/HB00046S.htm" },
-    phyto: { text: "Health & Safety Code §487.1071 (HB 46)", url: "https://capitol.texas.gov/tlodocs/89R/analysis/html/HB00046S.htm" },
-    form: { text: "Occ. Code §169.001 (medical use excludes smoking); §169.006 (pulmonary inhalation)", url: "https://capitol.texas.gov/tlodocs/89R/analysis/html/HB00046S.htm" },
+    dose: { text: "Occ. Code §169.001(3), as amended by HB 46 (2025)", url: "https://capitol.texas.gov/tlodocs/89R/billtext/html/HB00046F.htm" },
+    pkg: { text: "Health & Safety Code §487.107(c), added by HB 46 (2025)", url: "https://capitol.texas.gov/tlodocs/89R/billtext/html/HB00046F.htm" },
+    phyto: { text: "Health & Safety Code §487.1071, added by HB 46 (2025)", url: "https://capitol.texas.gov/tlodocs/89R/billtext/html/HB00046F.htm" },
+    form: { text: "Occ. Code §169.001(4)–(5) (medical use excludes smoking); §169.006 (pulmonary inhalation)", url: "https://capitol.texas.gov/tlodocs/89R/billtext/html/HB00046F.htm" },
     label: { text: "37 TAC §12.7(p)(6)–(8)", url: "https://www.law.cornell.edu/regulations/texas/37-Tex-Admin-Code-SS-12-7" },
     testing: { text: "Texas Compassionate Use Program overview (Vicente LLP, 2026)", url: "https://vicentellp.com/insights/texas-compassionate-use-program-tcup-overview/" },
   };
@@ -606,6 +844,6 @@ ${coaText}
     return { checks, counts, verdict, math, formClass: fc };
   }
 
-  return { parseText, extractionPrompt, extractionSchema, sanitizeExtraction, evaluate, thcMath, canonCannabinoid, formClass, num, fmt, CATEGORY_LABEL, THC_WEIGHT };
+  return { parseText, joinLine, extractionPrompt, extractionSchema, sanitizeExtraction, evaluate, thcMath, canonCannabinoid, formClass, num, fmt, CATEGORY_LABEL, THC_WEIGHT };
 })();
 if (typeof module !== "undefined") module.exports = CORE;

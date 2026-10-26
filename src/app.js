@@ -344,14 +344,16 @@
         for (let i = 1; i <= Math.min(doc.numPages, 12); i++) {
           const page = await doc.getPage(i);
           const tc = await page.getTextContent();
-          let lastY = null, line = "";
+          // group pieces into lines by height on the page, then join them by their gaps (see CORE.joinLine)
+          let lastY = null, row = [];
           for (const it of tc.items) {
+            if (!it.str) continue;
             const y = Math.round(it.transform[5]);
-            if (lastY !== null && Math.abs(y - lastY) > 2) { text += line.trimEnd() + "\n"; line = ""; }
-            line += (line && !line.endsWith(" ") ? "   " : "") + it.str;
+            if (lastY !== null && Math.abs(y - lastY) > 2) { text += CORE.joinLine(row) + "\n"; row = []; }
+            row.push({ str: it.str, x: it.transform[4], w: it.width, h: it.height || Math.abs(it.transform[3]) });
             lastY = y;
           }
-          text += line.trimEnd() + "\n\n";
+          text += CORE.joinLine(row) + "\n\n";
         }
         state.fileName = f.name;
         if (text.replace(/\s/g, "").length > 150) {

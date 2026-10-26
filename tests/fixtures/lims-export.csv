@@ -1,0 +1,34 @@
+Field,Value
+Laboratory,Golden Coast Testing (fictional)
+Client,Redwood Row Farms (fictional)
+Product Name,Coastal Haze Flower
+Category,Flower
+Batch Number,RRF-2610-07
+Net Weight,3.5 g
+Date Sampled,10/03/2026
+Date Reported,10/09/2026
+Section,Analyte,Result,Unit,Limit,Status
+Cannabinoids,THCA,24.10,%,,
+Cannabinoids,Δ9-THC,0.82,%,,
+Cannabinoids,CBDA,0.05,%,,
+Cannabinoids,CBD,ND,%,,
+Cannabinoids,CBG,0.41,%,,
+Cannabinoids,Total THC,21.96,%,,
+Heavy Metals,Lead,0.21,µg/g,0.5,Pass
+Heavy Metals,Arsenic,ND,µg/g,0.2,Pass
+Heavy Metals,Cadmium,ND,µg/g,0.2,Pass
+Heavy Metals,Mercury,ND,µg/g,0.1,Pass
+Pesticides,Myclobutanil,0.31,µg/g,0.2,Fail
+Pesticides,Bifenazate,ND,µg/g,0.1,Pass
+Residual Solvents,Butane,ND,µg/g,5000,Pass
+Residual Solvents,Ethanol,ND,µg/g,5000,Pass
+Microbials,Aspergillus fumigatus,Not Detected in 1 g,,,Pass
+Microbials,Aspergillus flavus,Not Detected in 1 g,,,Pass
+Microbials,Aspergillus niger,Not Detected in 1 g,,,Pass
+Microbials,Aspergillus terreus,Not Detected in 1 g,,,Pass
+Microbials,Salmonella,Not Detected in 1 g,,,Pass
+Microbials,STEC,Not Detected in 1 g,,,Pass
+Mycotoxins,Aflatoxin B1,ND,µg/kg,20,Pass
+Mycotoxins,Ochratoxin A,ND,µg/kg,20,Pass
+Water Activity,Water Activity,0.58,aw,0.65,Pass
+Foreign Material,Visual inspection,None Detected,,,Pass

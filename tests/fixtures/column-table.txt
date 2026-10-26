@@ -1,0 +1,59 @@
+GATEWAY ANALYTICS LLC
+Certificate of Analysis
+Product:   Show-Me Sunrise Cartridge          Licensee:   Ozark Valley Manufacturing (fictional)
+Category:   Vape Cartridge                     METRC Tag:   1A4050300000ABC000001234
+Net Weight:   1 g                              Sampled On:   10/01/26
+Analysis Date:   10/06/26                      Report Date:   10/08/26
+Accreditation:   ISO/IEC 17025:2017 #L26-123 (fictional)
+
+Test Summary
+Cannabinoids    Pesticides    Heavy Metals    Microbials    Mycotoxins    Residual Solvents    Water Activity    Foreign Matter
+Tested    Pass    Pass    Pass    Pass    Pass    Not Required    Pass
+
+POTENCY (HPLC-UV)
+Analyte	Dilution	LOD	LOQ	Result	Result
+%	mg/g
+Δ9-Tetrahydrocannabinol	20	0.01	0.03	82.41	824.1
+Δ8-Tetrahydrocannabinol	20	0.01	0.03	ND	ND
+Tetrahydrocannabinolic acid	20	0.01	0.03	1.20	12.0
+Cannabidiol	20	0.01	0.03	0.35	3.5
+Cannabinol	20	0.01	0.03	0.48	4.8
+Tetrahydrocannabivarin	20	0.01	0.03	0.22	2.2
+Cannabidivarin	20	0.01	0.03	ND	ND
+Cannabidiolic acid	20	0.01	0.03	ND	ND
+Total Δ9-THC	83.46	834.6
+
+RESIDUAL SOLVENTS — PASS
+Compound    LOQ (ppm)    Action Level (ppm)    Result (ppm)    Status
+Butane    50    800    ND    Pass
+Propane    50    2100    112    Pass
+Ethanol    50    5000    310    Pass
+Acetone    50    1000    ND    Pass
+
+PESTICIDES — PASS
+Analyte    LOQ (ppb)    Action Level (ppb)    Result (ppb)    Status
+Bifenazate    10    100    ND    Pass
+Myclobutanil    10    100    ND    Pass
+Imidacloprid    10    100    ND    Pass
+
+HEAVY METALS — PASS
+Element    Result (µg/g)    Limit (µg/g)    Status
+Arsenic    <0.02    0.2    Pass
+Cadmium    <0.02    0.2    Pass
+Chromium    0.05    0.6    Pass
+Lead    0.11    0.5    Pass
+Mercury    <0.01    0.1    Pass
+
+MICROBIALS — PASS
+Organism    Result    Limit    Status
+Aspergillus fumigatus    Not Detected in 1 g    Absent in 1 g    Pass
+Aspergillus flavus    Not Detected in 1 g    Absent in 1 g    Pass
+Aspergillus niger    Not Detected in 1 g    Absent in 1 g    Pass
+Aspergillus terreus    Not Detected in 1 g    Absent in 1 g    Pass
+Salmonella spp.    Not Detected in 1 g    Absent in 1 g    Pass
+Pathogenic E. coli (STEC)    Not Detected in 1 g    Absent in 1 g    Pass
+
+MYCOTOXINS — PASS
+Analyte    Result (µg/kg)    Limit (µg/kg)    Status
+Aflatoxin B1    <1.0    20    Pass
+Ochratoxin A    <1.0    20    Pass
