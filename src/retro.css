@@ -1,0 +1,130 @@
+/* Retrofuturist skin: a mid-century lab instrument.
+   Enamel panels with chrome trim, capsule controls that press in like console keys, dark phosphor
+   readout screens for the numbers, and indicator lamps beside each finding. The period display face
+   (Michroma) is used only for short titles; everything people read stays in IBM Plex Sans.
+   Loaded after styles.css. Remove this file's <link> to go back to the plain look. */
+:root {
+  --paper: #e3e8dc; --sheet: #f7f8f2; --tint: #eef1e8; --ink: #10221b; --muted: #46594f; --rule: #c3cbbd;
+  --chrome: #aab3ad; --chrome-hi: #ffffff; --chrome-lo: #8d9690;
+  --screen: #0f241c; --screen-ink: #a8f0cc; --screen-dim: #8cc7a8; --screen-track: #1c3a2e;
+  --screen-fail: #ff8f7e; --screen-warn: #ffc35a; --screen-na: #a9bdb3;
+  --signal: #e2603f; --press: #0f3d2f;
+  --f-retro: "Michroma", "Eurostile", "Arial Black", sans-serif;
+  --r: 16px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0b1410; --sheet: #13211b; --tint: #182a22; --ink: #e6efe9; --muted: #9ab0a4; --rule: #2b3d34;
+  --chrome: #46544d; --chrome-hi: rgba(255,255,255,.12); --chrome-lo: #050a08;
+  --screen: #06100b; --screen-track: #12261d; --signal: #ff8a6b; --press: #2f7d61; } }
+:root[data-theme="dark"] {
+  --paper: #0b1410; --sheet: #13211b; --tint: #182a22; --ink: #e6efe9; --muted: #9ab0a4; --rule: #2b3d34;
+  --chrome: #46544d; --chrome-hi: rgba(255,255,255,.12); --chrome-lo: #050a08;
+  --screen: #06100b; --screen-track: #12261d; --signal: #ff8a6b; --press: #2f7d61;
+}
+
+/* ---------- type: period face for short titles only ---------- */
+.band h1 { font-family: var(--f-retro); font-weight: 400; font-size: clamp(26px, 3.9vw, 44px); line-height: 1.12; letter-spacing: .01em; }
+.panel-head h2, .rulebook h2, .rb-head h2 { font-family: var(--f-retro); font-weight: 400; font-size: 18px; letter-spacing: .02em; line-height: 1.3; }
+body { font-size: 15.5px; line-height: 1.55; }
+
+/* ---------- enamel panels with chrome trim ---------- */
+.panel {
+  background: var(--sheet); border: 2px solid var(--chrome); border-radius: 22px;
+  box-shadow: inset 0 1px 0 var(--chrome-hi), 0 3px 0 var(--chrome-lo);
+}
+.panel-head { border-bottom: 2px solid var(--rule); padding-bottom: 12px; }
+.panel-head .eyebrow { border: 1.5px solid var(--chrome); border-radius: 999px; padding: 2px 10px; background: var(--tint); color: var(--muted); }
+
+/* ---------- capsule controls that press in ---------- */
+.btn {
+  border: 2px solid var(--chrome); border-radius: 999px; background: var(--sheet); font-weight: 700;
+  box-shadow: inset 0 1px 0 var(--chrome-hi), 0 3px 0 var(--chrome-lo); transition: transform .08s ease, box-shadow .08s ease;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--chrome-hi), 0 1px 0 var(--chrome-lo); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--press); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 3px 0 var(--press); }
+.btn.primary:active:not(:disabled) { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 0 var(--press); }
+.btn:focus-visible, .sample:focus-visible, .linkbtn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* sample keys: a round lamp shows how each sample fares under the selected rules */
+.sample {
+  position: relative; border: 2px solid var(--chrome); border-left-width: 2px; border-radius: 16px; background: var(--sheet);
+  padding-left: 30px; box-shadow: inset 0 1px 0 var(--chrome-hi), 0 3px 0 var(--chrome-lo); transition: transform .08s ease, box-shadow .08s ease;
+}
+.sample[data-tone] { border-left-color: var(--chrome); }
+.sample::before { content: ""; position: absolute; left: 11px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--rule); box-shadow: 0 0 0 3px color-mix(in srgb, var(--rule) 35%, transparent); }
+.sample[data-tone="pass"]::before { background: var(--pass); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pass) 25%, transparent); }
+.sample[data-tone="warn"]::before { background: var(--warn); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 25%, transparent); }
+.sample[data-tone="fail"]::before { background: var(--fail); box-shadow: 0 0 0 3px color-mix(in srgb, var(--fail) 25%, transparent); }
+.sample:active { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--chrome-hi), 0 1px 0 var(--chrome-lo); }
+.sample[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 1px 0 var(--chrome-lo); transform: translateY(2px); }
+
+/* ---------- fields ---------- */
+.field input, .field select, .fetchrow input, .localrow input, .localrow select, .shareout textarea {
+  border: 2px solid var(--rule); border-radius: 12px; background: var(--sheet);
+}
+.field input:focus, .field select:focus, .fetchrow input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+/* the COA text sits on a phosphor data screen */
+textarea#coa {
+  background: var(--screen); color: #c6f5dd; border: 2px solid var(--chrome); border-radius: 18px;
+  font-size: 13px; line-height: 1.55; padding: 14px 16px; caret-color: var(--signal);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.45);
+}
+textarea#coa::placeholder { color: var(--screen-dim); }
+textarea#coa:focus { border-color: var(--accent); box-shadow: inset 0 2px 10px rgba(0,0,0,.45), 0 0 0 3px var(--accent-soft); }
+.drop { border-radius: 16px; }
+details.localai, details.data, fieldset.details { border: 2px solid var(--rule); border-radius: 18px; }
+
+/* ---------- section nav: a capsule selector ---------- */
+.secnav-links { background: var(--tint); border: 2px solid var(--chrome); border-radius: 999px; padding: 3px; box-shadow: inset 0 1px 3px rgba(0,0,0,.12); }
+.secnav-links a { border-radius: 999px; }
+
+/* ---------- verdict ---------- */
+.verdict { border-width: 2px; border-radius: 22px; }
+.stamp { font-family: var(--f-retro); font-weight: 400; font-size: 21px; letter-spacing: .14em; border-radius: 12px; }
+.pill { border-radius: 999px; }
+
+/* ---------- THC meters: dark readout screens ---------- */
+.meter, .meter[data-s] {
+  background: var(--screen); border: 2px solid var(--chrome); border-radius: 20px; color: var(--screen-ink);
+  box-shadow: inset 0 2px 12px rgba(0,0,0,.5), 0 3px 0 var(--chrome-lo);
+}
+.meter .eyebrow, .meter .lim, .meter .how2, .meter .val small, .meter .altv span { color: var(--screen-dim); }
+.meter .term { text-decoration-color: color-mix(in srgb, var(--screen-ink) 55%, transparent); }
+.meter .val { font-family: var(--f-mono); font-weight: 600; letter-spacing: -.01em; color: var(--screen-ink); }
+.meter[data-s="pass"] .val { color: var(--screen-ink); }
+.meter[data-s="fail"] .val { color: var(--screen-fail); }
+.meter[data-s="soon"] .val { color: var(--screen-warn); }
+.meter[data-s="na"] .val, .meter[data-s="nolimit"] .val { color: var(--screen-na); }
+.meter[data-s="fail"] { border-color: var(--fail); }
+.meter[data-s="soon"] { border-color: var(--warn); }
+.meter .altv { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); }
+.meter .altv b { color: var(--screen-ink); } .meter .altv.over b { color: var(--screen-fail); }
+.meter .altv.over { border-color: color-mix(in srgb, var(--screen-fail) 60%, transparent); }
+.meter .valtag { color: var(--screen-dim); }
+/* LED segment bar */
+.bar { height: 14px; border-radius: 7px; background: var(--screen-track); border: 1px solid rgba(255,255,255,.08); overflow: hidden; }
+.bar i { background: repeating-linear-gradient(90deg, var(--screen-ink) 0 7px, transparent 7px 10px); }
+.bar.over i { background: repeating-linear-gradient(90deg, var(--screen-fail) 0 7px, transparent 7px 10px); }
+.bar b { background: #ffffff; width: 3px; }
+
+/* ---------- findings: indicator lamps ---------- */
+.checks { border: 2px solid var(--rule); border-radius: 20px; overflow: hidden; }
+.check::before { inset: auto; left: 16px; top: 20px; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 22%, transparent); }
+.check[data-s="fail"]::before { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fail) 28%, transparent), 0 0 10px color-mix(in srgb, var(--fail) 55%, transparent); }
+.check[data-s="warn"]::before { box-shadow: 0 0 0 3px color-mix(in srgb, var(--warn) 28%, transparent), 0 0 10px color-mix(in srgb, var(--warn) 50%, transparent); }
+.check[data-s="pass"]::before { box-shadow: 0 0 0 3px color-mix(in srgb, var(--pass) 25%, transparent); }
+.check .tag { margin-left: 36px; border-radius: 999px; }
+@media (max-width: 480px) { .check { padding-left: 40px; } .check .tag { margin-left: 0; } }
+
+/* ---------- rulebook and notes: instrument sub-panels ---------- */
+.rb-grid > section { background: var(--tint); border: 2px solid var(--rule); border-radius: 18px; padding: 16px 18px; }
+.rb-grid h3 { font-family: var(--f-retro); font-weight: 400; font-size: 15px; letter-spacing: .02em; }
+.notes > div { background: var(--sheet); border: 2px solid var(--rule); border-radius: 18px; padding: 16px 18px; }
+.notes h3 { font-family: var(--f-retro); font-weight: 400; font-size: 14.5px; letter-spacing: .02em; }
+
+/* ---------- tooltip: a small readout ---------- */
+.tip-pop { background: var(--screen); color: #e6f7ee; border: 2px solid var(--chrome); border-radius: 14px; }
+.tip-pop b { color: var(--screen-ink); }
+
+@media (prefers-reduced-motion: reduce) { .btn, .sample { transition: none; } .btn:active, .sample:active { transform: none; } }

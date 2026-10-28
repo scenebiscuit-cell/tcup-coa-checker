@@ -52,6 +52,8 @@ The public demo runs entirely in the browser, and nothing is uploaded. It accept
 
 A microscope view of trichomes on the leaf surface, with smooth stalks and glossy resin heads in the clear, milky, and amber colors growers watch for, on a flat, film-grain forest green. The three tallest have eyes that follow the cursor and show each verdict: happy for Clear, a squint for Review, wide for Hold. The tall one wears a cowboy hat, since this checker is Texas-only. They're decorative, hidden from screen readers, and still for people who prefer reduced motion.
 
+Below the header, the page is styled like a mid-century lab instrument (`src/retro.css`): enamel panels with chrome trim, capsule buttons, results on dark phosphor readout screens, and indicator lamps beside each finding. The period display face is kept to short titles so body text stays easy to read.
+
 ## Use a local AI model (Ollama)
 
 The built-in parser covers simple and common lab layouts. For any layout, including scanned PDFs and phone photos, connect a model running on your own computer. The COA never leaves your machine.
