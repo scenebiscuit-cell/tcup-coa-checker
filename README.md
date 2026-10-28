@@ -50,7 +50,7 @@ The public demo runs entirely in the browser, and nothing is uploaded. It accept
 
 ### The header
 
-Three abstract vector trichomes, in the clear, milky, and amber colors growers watch for, follow the cursor with their eyes and react to each verdict: happy for Clear, a raised brow for Review, worried for Hold. The tall one wears a cowboy hat, since this checker is Texas-only. They're decorative, hidden from screen readers, and still for people who prefer reduced motion.
+Three soft, storybook-style trichomes, in the clear, milky, and amber colors growers watch for, stand in front of a cannabis leaf on a flat, film-grain forest green. They follow the cursor with their eyes and react to each verdict: happy for Clear, a raised brow for Review, worried for Hold. The tall one wears a cowboy hat, since this checker is Texas-only. They're decorative, hidden from screen readers, and still for people who prefer reduced motion.
 
 ## Use a local AI model (Ollama)
 

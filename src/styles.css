@@ -1,10 +1,10 @@
 /* Layout: lab bench. A soft teal-green-blue band states the limits up top; below it,
    the document going in (left) and the compliance report coming out (right). Stacks on phones. */
 :root {
-  --paper: #eef3f6; --sheet: #ffffff; --ink: #0d1c25; --muted: #4c616d; --rule: #cbd8df; --tint: #f3f7f9;
-  --band-a: #094a52; --band-b: #0f5747; --band-c: #133f63;
-  --band-ink: #ffffff; --band-soft: rgba(255,255,255,.8); --band-hi: #b4f0dd; --band-line: rgba(255,255,255,.06);
-  --accent: #0d6779; --accent-ink: #ffffff; --accent-soft: #d6eef0;
+  --paper: #eef3f0; --sheet: #ffffff; --ink: #0e1c17; --muted: #4a6157; --rule: #cbdad2; --tint: #f2f6f4;
+  --band: #123a2e; --band-leaf: #215a48;
+  --band-ink: #ffffff; --band-soft: rgba(255,255,255,.84); --band-hi: #ff9a7a; --band-line: rgba(255,255,255,.06);
+  --accent: #1e6b52; --accent-ink: #ffffff; --accent-soft: #dcefe6;
   --pass: #1f7a46; --pass-soft: #e0f2e7; --warn: #a15c00; --warn-soft: #fcefd6; --fail: #b4261b; --fail-soft: #fbe3e0; --info: #3f5664; --info-soft: #e5edf2;
   --on-sem: #ffffff;
   --f-display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
@@ -14,18 +14,18 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --paper: #0b1318; --sheet: #121d24; --ink: #e3ebef; --muted: #96a8b2; --rule: #24343f; --tint: #16232b;
-  --band-a: #083a40; --band-b: #0b3f34; --band-c: #0f2f4a;
-  --band-ink: #f2f8fb; --band-soft: rgba(242,248,251,.74); --band-hi: #9ae6cf; --band-line: rgba(255,255,255,.045);
-  --accent: #6cc9d6; --accent-ink: #0b1318; --accent-soft: #153a40;
+  --paper: #0a1511; --sheet: #10201a; --ink: #e2ece7; --muted: #93ab9f; --rule: #22382f; --tint: #142820;
+  --band: #0e2e24; --band-leaf: #1a4a3b;
+  --band-ink: #f2f8fb; --band-soft: rgba(255,255,255,.84); --band-hi: #ff9a7a; --band-line: rgba(255,255,255,.045);
+  --accent: #7fd6b0; --accent-ink: #0a1511; --accent-soft: #163a2d;
   --pass: #5fcf8e; --pass-soft: #12301f; --warn: #f0ae45; --warn-soft: #36280d; --fail: #ff7a6e; --fail-soft: #3d1714; --info: #a6b9c5; --info-soft: #1b2932;
   --on-sem: #0b1318;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
-  --paper: #0b1318; --sheet: #121d24; --ink: #e3ebef; --muted: #96a8b2; --rule: #24343f; --tint: #16232b;
-  --band-a: #083a40; --band-b: #0b3f34; --band-c: #0f2f4a;
-  --band-ink: #f2f8fb; --band-soft: rgba(242,248,251,.74); --band-hi: #9ae6cf; --band-line: rgba(255,255,255,.045);
-  --accent: #6cc9d6; --accent-ink: #0b1318; --accent-soft: #153a40;
+  --paper: #0a1511; --sheet: #10201a; --ink: #e2ece7; --muted: #93ab9f; --rule: #22382f; --tint: #142820;
+  --band: #0e2e24; --band-leaf: #1a4a3b;
+  --band-ink: #f2f8fb; --band-soft: rgba(255,255,255,.84); --band-hi: #ff9a7a; --band-line: rgba(255,255,255,.045);
+  --accent: #7fd6b0; --accent-ink: #0a1511; --accent-soft: #163a2d;
   --pass: #5fcf8e; --pass-soft: #12301f; --warn: #f0ae45; --warn-soft: #36280d; --fail: #ff7a6e; --fail-soft: #3d1714; --info: #a6b9c5; --info-soft: #1b2932;
   --on-sem: #0b1318;
   color-scheme: dark; }
@@ -45,12 +45,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- header band ---------- */
 .band {
   color: var(--band-ink);
-  background-color: var(--band-b);
-  /* soft organic light pools instead of a grid */
-  background-image:
-    radial-gradient(60% 90% at 88% 0%, rgba(244,178,62,.16), transparent 60%),
-    radial-gradient(50% 70% at 70% 110%, rgba(180,240,221,.14), transparent 65%),
-    linear-gradient(115deg, var(--band-a) 0%, var(--band-b) 48%, var(--band-c) 100%);
+  /* flat color with a fine film grain, no gradient */
+  background-color: var(--band);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   overflow: hidden;
 }
 .band-in { max-width: 1240px; margin: 0 auto; padding-block: 30px 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 420px); gap: 20px 32px; align-items: end; }
@@ -61,7 +58,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .band p { margin: 12px 0 0; color: var(--band-soft); max-width: 60ch; font-size: 16px; }
 .band p b { color: var(--band-ink); font-weight: 600; }
 .limits { display: flex; gap: 12px; flex-wrap: wrap; }
-.limit { border: 1px solid rgba(180,240,221,.38); border-radius: var(--r); padding: 12px 16px 10px; min-width: 150px; background: rgba(0,0,0,.12); }
+.limit { border: 1px solid rgba(255,154,122,.45); border-radius: 10px; padding: 12px 16px 10px; min-width: 150px; background: rgba(255,255,255,.06); }
 .limit b { display: block; font-family: var(--f-display); font-size: 34px; font-weight: 700; line-height: 1; color: var(--band-hi); font-variant-numeric: tabular-nums; }
 .limit span { display: block; font-size: 13px; color: var(--band-soft); margin-top: 4px; }
 .limit small { display: block; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--band-soft); opacity: .8; margin-top: 6px; }
@@ -241,33 +238,32 @@ tr.bad td { color: var(--fail); font-weight: 700; }
 /* ---------- header art: the trichome crew ---------- */
 .band-art { align-self: stretch; display: flex; align-items: flex-end; justify-content: center; min-width: 0; margin-bottom: -28px; }
 .crew { width: 100%; max-width: 420px; height: auto; display: block; overflow: visible; }
-.crew .blob { fill: rgba(0,0,0,.14); }
-.crew .ground { fill: rgba(0,0,0,.2); }
-.crew .stalk { fill: url(#g-stalk); }
-.crew .clear .bulb { fill: url(#g-clear); }
-.crew .milky .bulb { fill: url(#g-milky); }
-.crew .amber .bulb { fill: url(#g-amber); }
-.crew .gloss { fill: #ffffff; opacity: .75; }
-.crew .sclera { fill: #ffffff; stroke: rgba(13,28,37,.18); stroke-width: 1; }
-.crew .pupil { fill: #0d1c25; }
-.crew .mouth { fill: none; stroke: #0d1c25; stroke-width: 2.4; stroke-linecap: round; transition: d .25s ease; }
-.crew .brow { fill: none; stroke: #0d1c25; stroke-width: 2.4; stroke-linecap: round; opacity: 0; transition: opacity .2s ease, transform .2s ease; }
-.crew .head, .crew .eye { transform-box: fill-box; transform-origin: 50% 100%; }
-.crew .eye { transform-origin: 50% 50%; }
+.crew .leaf path { fill: var(--band-leaf); }
+.crew .stalk, .crew .arm { fill: #9edcbc; }
+.crew .clear .bulb { fill: #e6f7ef; }
+.crew .milky .bulb { fill: #f6f1e8; }
+.crew .amber .bulb { fill: #f6ae45; }
+.crew .shade { fill: #000; opacity: .07; }
+.crew .cheek { fill: #ff9a7a; opacity: .55; }
+.crew .dot { fill: #1d1533; }
+.crew .glint { fill: #ffffff; }
+.crew .mouth, .crew .brow { fill: none; stroke: #1d1533; stroke-width: 2.4; stroke-linecap: round; }
+.crew .mouth { transition: d .25s ease; }
+.crew .brow { opacity: 0; transition: opacity .2s ease, transform .2s ease; transform-box: fill-box; transform-origin: 50% 50%; }
+.crew .head { transform-box: fill-box; transform-origin: 50% 100%; }
+.crew .eye { transform-box: fill-box; transform-origin: 50% 50%; }
 /* blink: eyes squash for a moment */
 .crew .tri.blink .eye { animation: crew-blink .18s ease-in-out; }
 @keyframes crew-blink { 50% { transform: scaleY(.1); } }
-/* a little bob when you hover one */
-.crew .tri { cursor: default; }
+/* a little wobble when you hover one */
 .crew .tri:hover .head { animation: crew-bob .5s ease; }
 @keyframes crew-bob { 30% { transform: translateY(-5px) rotate(-3deg); } 65% { transform: translateY(1px) rotate(2deg); } }
 /* moods follow the verdict */
 .band-art[data-mood="review"] .brow { opacity: 1; }
-.band-art[data-mood="review"] .brow:nth-of-type(2) { transform: translateY(-3px); }
+.band-art[data-mood="review"] .brow.r { transform: translateY(-3px); }
 .band-art[data-mood="hold"] .brow { opacity: 1; }
-.band-art[data-mood="hold"] .tri .brow:first-of-type { transform: rotate(-14deg); }
-.band-art[data-mood="hold"] .tri .brow:nth-of-type(2) { transform: rotate(14deg); }
-.crew .brow { transform-box: fill-box; transform-origin: 50% 50%; }
+.band-art[data-mood="hold"] .brow.l { transform: rotate(-14deg); }
+.band-art[data-mood="hold"] .brow.r { transform: rotate(14deg); }
 .band-art.react .head { animation: crew-hop .45s cubic-bezier(.3,1.6,.5,1); }
 .band-art.react .milky .head { animation-delay: .06s; } .band-art.react .amber .head { animation-delay: .12s; }
 @keyframes crew-hop { 40% { transform: translateY(-9px); } }

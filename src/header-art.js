@@ -9,7 +9,7 @@
   const svg = root.querySelector("svg");
   const eyes = [...root.querySelectorAll(".eye")].map(g => ({
     g, pupil: g.querySelector(".pupil"), x: +g.dataset.x, y: +g.dataset.y,
-    reach: +g.querySelector(".sclera").getAttribute("rx") * 0.45,
+    reach: +g.dataset.reach || 3,
   }));
   const reduce = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
 
@@ -81,8 +81,8 @@
   // drawn to fit the trichome's own size; fills are set here so no stylesheet is needed
   const NS = "http://www.w3.org/2000/svg";
   function drawHat(t) {
-    const bulb = t.querySelector(".bulb");
-    const x = +bulb.getAttribute("cx"), cy = +bulb.getAttribute("cy"), r = +bulb.getAttribute("r");
+    // the trichome says where its hat goes: centre x, a point near the top of the head, and the head's size
+    const x = +t.dataset.hx, cy = +t.dataset.hy, r = +t.dataset.hr;
     const u = r / 26, y = cy - r * 0.84;               // u: one unit of the 64-unit favicon drawing
     const P = (d) => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (m, a, b) => `${(x + (+a - 32) * u).toFixed(1)} ${(y + (+b - 20) * u).toFixed(1)}`);
     const outer = document.createElementNS(NS, "g"), g = document.createElementNS(NS, "g");

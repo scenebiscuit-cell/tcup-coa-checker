@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#094a52"/>
+  <rect width="64" height="64" rx="14" fill="#123a2e"/>
   <path d="M11 36 L5 31 L13 29 L9 24 L18 26 L46 26 L55 24 L51 29 L59 31 L53 36 Z" fill="#f4f7f8"/>
   <defs><radialGradient id="a" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffe3a6"/><stop offset=".55" stop-color="#f4b23e"/><stop offset="1" stop-color="#c97a12"/></radialGradient></defs>
   <circle cx="32" cy="38" r="18" fill="url(#a)"/>
