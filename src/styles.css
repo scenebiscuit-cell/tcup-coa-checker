@@ -235,41 +235,48 @@ tr.bad td { color: var(--fail); font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-/* ---------- header art: the trichome crew ---------- */
-.band-art { align-self: stretch; display: flex; align-items: flex-end; justify-content: center; min-width: 0; margin-bottom: -28px; }
-.crew { width: 100%; max-width: 420px; height: auto; display: block; overflow: visible; }
-.crew .leaf path { fill: var(--band-leaf); }
-.crew .stalk, .crew .arm { fill: #9edcbc; }
-.crew .clear .bulb { fill: #e6f7ef; }
-.crew .milky .bulb { fill: #f6f1e8; }
-.crew .amber .bulb { fill: #f6ae45; }
-.crew .shade { fill: #000; opacity: .07; }
-.crew .cheek { fill: #ff9a7a; opacity: .55; }
-.crew .dot { fill: #1d1533; }
+/* ---------- header art: trichomes under the microscope ---------- */
+.band-art { align-self: center; display: flex; justify-content: center; min-width: 0; }
+.crew { width: 100%; max-width: 330px; height: auto; display: block; }
+.crew .lensbg { fill: #0d2c22; }
+.crew .rim { fill: none; stroke: #f6f1e8; stroke-width: 7; }
+.crew .ticks line { stroke: #f6f1e8; stroke-width: 1.4; }
+.crew .scale line { stroke: #ff9a7a; stroke-width: 3; stroke-linecap: round; }
+.crew .scale text { fill: #ff9a7a; font: 600 10px var(--f-mono); text-anchor: middle; }
+.crew .surface { fill: #2f6a52; }
+.crew .epi { fill: #3c7d61; stroke: #2a5e48; stroke-width: 1; }
+.crew .stalk { fill: #b7e6d0; }
+.crew .stalkhi { fill: none; stroke: #ffffff; stroke-width: 2; stroke-linecap: round; opacity: .35; }
+.crew .bg .stalk { fill: #3f7d63; } .crew .bg .stalkhi { opacity: .12; }
+.crew .bg .membrane { opacity: .55; } .crew .bg .gloss { opacity: .45; }
+.crew .disc { fill: #6fbf9c; opacity: .35; }
+.crew .gloss { fill: #ffffff; opacity: .75; }
+/* eyes: white rim, dark pupil, a highlight; the pupil follows the pointer */
+.crew .sclera { fill: #ffffff; }
+.crew .dot { fill: #1d1533; transform-box: fill-box; transform-origin: 50% 50%; transition: transform .2s ease; }
 .crew .glint { fill: #ffffff; }
-.crew .mouth, .crew .brow { fill: none; stroke: #1d1533; stroke-width: 2.4; stroke-linecap: round; }
-.crew .mouth { transition: d .25s ease; }
-.crew .brow { opacity: 0; transition: opacity .2s ease, transform .2s ease; transform-box: fill-box; transform-origin: 50% 50%; }
-.crew .head { transform-box: fill-box; transform-origin: 50% 100%; }
-.crew .eye { transform-box: fill-box; transform-origin: 50% 50%; }
-/* blink: eyes squash for a moment */
+.crew .happy { fill: none; stroke: #1d1533; stroke-width: 2.6; stroke-linecap: round; opacity: 0; }
+.crew .open, .crew .happy { transition: opacity .15s ease; }
+.crew .head, .crew .eye { transform-box: fill-box; transform-origin: 50% 50%; }
+.crew .fg .head { transform-origin: 50% 100%; }
+/* blink */
 .crew .tri.blink .eye { animation: crew-blink .18s ease-in-out; }
 @keyframes crew-blink { 50% { transform: scaleY(.1); } }
 /* a little wobble when you hover one */
-.crew .tri:hover .head { animation: crew-bob .5s ease; }
+.crew .fg:hover .head { animation: crew-bob .5s ease; }
 @keyframes crew-bob { 30% { transform: translateY(-5px) rotate(-3deg); } 65% { transform: translateY(1px) rotate(2deg); } }
-/* moods follow the verdict */
-.band-art[data-mood="review"] .brow { opacity: 1; }
-.band-art[data-mood="review"] .brow.r { transform: translateY(-3px); }
-.band-art[data-mood="hold"] .brow { opacity: 1; }
-.band-art[data-mood="hold"] .brow.l { transform: rotate(-14deg); }
-.band-art[data-mood="hold"] .brow.r { transform: rotate(14deg); }
-.band-art.react .head { animation: crew-hop .45s cubic-bezier(.3,1.6,.5,1); }
+/* moods follow the verdict, told with the eyes only */
+.band-art[data-mood="clear"] .open { opacity: 0; }
+.band-art[data-mood="clear"] .happy { opacity: 1; }
+.band-art[data-mood="review"] .eye.r { transform: scaleY(.55); }
+.band-art[data-mood="hold"] .eye { transform: scale(1.08); }
+.band-art[data-mood="hold"] .dot { transform: scale(.8); }
+.band-art.react .fg .head { animation: crew-hop .45s cubic-bezier(.3,1.6,.5,1); }
 .band-art.react .milky .head { animation-delay: .06s; } .band-art.react .amber .head { animation-delay: .12s; }
-@keyframes crew-hop { 40% { transform: translateY(-9px); } }
+@keyframes crew-hop { 40% { transform: translateY(-8px); } }
 @media (prefers-reduced-motion: reduce) { .crew .head, .crew .eye { animation: none !important; } }
 @media (max-width: 760px) {
   .band-in { grid-template-columns: minmax(0, 1fr); }
-  .band-art { order: -1; justify-content: flex-end; margin: -14px 0 -24px; }
-  .crew { max-width: 220px; }
+  .band-art { order: -1; justify-content: flex-end; margin: -10px 0 -6px; }
+  .crew { max-width: 170px; }
 }

@@ -48,7 +48,7 @@
   });
 
   /* ---------- blinking ---------- */
-  const tris = [...root.querySelectorAll(".tri")];
+  const tris = [...root.querySelectorAll(".tri.fg")];   // only the ones with eyes blink
   function blinkSoon() {
     if (reduce.matches) return;
     setTimeout(() => {
@@ -72,7 +72,7 @@
     root.dataset.mood = m;
     for (const t of tris) {
       const x = +t.dataset.mx, y = +t.dataset.my, r = +t.dataset.r;
-      t.querySelector(".mouth").setAttribute("d", MOUTH[m](x, y, r));
+      t.querySelector(".mouth")?.setAttribute("d", MOUTH[m](x, y, r));   // eyes-only art has no mouth
     }
     if (m !== "idle" && !reduce.matches) { root.classList.remove("react"); void root.getBoundingClientRect(); root.classList.add("react"); }
   }
@@ -102,7 +102,7 @@
     return outer;
   }
   function hat(on) {
-    const t = root.querySelector(".tri.clear");
+    const t = root.querySelector(".tri.fg.clear") || root.querySelector(".tri.clear");
     if (!t) return;
     const head = t.querySelector(".head");
     let h = head.querySelector(".hat");
