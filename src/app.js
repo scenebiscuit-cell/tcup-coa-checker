@@ -2,6 +2,10 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // numbers in findings get their own color and font so they stand out from the words.
+  // Runs on already-escaped text: skips digits inside entities (&#39;), names like Δ9-THC, and rule numbers (19 CSR 100-1.110).
+  const NUM = /(?<![\p{L}\p{N}#&;§.\-\/)(])((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:\s?(?:%|mg\/g|mg\/mL|mg|g|ppm|ppb|µg\/g|µg\/kg|CFU\/g|aw|mL|oz))?)(?![\p{L}\p{N}]|\s?(?:CSR|TAC|CCR|U\.S\.C)\b|-\d)/gu;
+  const nums = (html) => html.replace(NUM, '<span class="n">$1</span>');
   const F = CORE.fmt;
 
   const state = { data: null, result: null, source: null, sampleId: null, sampleText: null, images: [], fileName: null, ctl: null, sample: null, canImages: false };
@@ -523,7 +527,7 @@
     const order = { fail: 0, warn: 1, pass: 2, info: 3 };
     const checks = [...r.checks].sort((a, b) => order[a.status] - order[b.status]);
     $("checks").innerHTML = checks.map(c => `<li class="check" data-s="${c.status}"><span class="tag">${{ fail: "Fail", warn: "Review", pass: "Pass", info: "Note" }[c.status]}</span>
-      <h4>${esc(c.title)}</h4><p>${esc(c.detail)} <cite><a href="${c.cite.url}" target="_blank" rel="noopener">${esc(c.cite.text)}</a></cite></p></li>`).join("");
+      <h4>${nums(esc(c.title))}</h4><p>${nums(esc(c.detail))} <cite><a href="${c.cite.url}" target="_blank" rel="noopener">${esc(c.cite.text)}</a></cite></p></li>`).join("");
 
     // tables
     const cRows = d.cannabinoids.map(c => {

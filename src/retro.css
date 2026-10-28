@@ -4,10 +4,17 @@
    (Michroma) is used only for short titles; everything people read stays in IBM Plex Sans.
    Loaded after styles.css. Remove this file's <link> to go back to the plain look. */
 :root {
-  --paper: #e3e8dc; --sheet: #f7f8f2; --tint: #eef1e8; --ink: #10221b; --muted: #46594f; --rule: #c3cbbd;
-  --chrome: #aab3ad; --chrome-hi: #ffffff; --chrome-lo: #8d9690;
+  /* light mode is a softer, dimmer enamel; text colors are darkened to keep AA contrast on it */
+  --paper: #cfd6c7; --sheet: #e2e6da; --tint: #d8ddcf; --ink: #10221b; --muted: #3e5047; --rule: #b3bcac;
+  --chrome: #9ea8a1; --chrome-hi: rgba(255,255,255,.7); --chrome-lo: #7e8881;
+  --accent: #1b6049; --accent-soft: #c6ddd1;
+  --pass: #15633a; --pass-soft: #d3e8da; --warn: #874a00; --warn-soft: #f1e2c4; --fail: #a3201a; --fail-soft: #f3d6d1; --info-soft: #d7e0e4;
+  --cat-residual_solvents: #17558f; --cat-pesticides: #8a3f08; --cat-fertilizers: #3a6410; --cat-mycotoxins: #664e00; --cat-moisture: #005b68; --cat-terpenes: #1f652b;
+  /* one hue per card, so neighbouring cards and their labels are easy to tell apart */
+  --plate-1: #1d5690; --plate-2: #62379c; --plate-3: #7a4f00; --plate-4: #005866; --plate-5: #9a3a20;
+  --num: #1d5690;
   --screen: #0f241c; --screen-ink: #a8f0cc; --screen-dim: #8cc7a8; --screen-track: #1c3a2e;
-  --screen-fail: #ff8f7e; --screen-warn: #ffc35a; --screen-na: #a9bdb3;
+  --screen-fail: #ff8f7e; --screen-warn: #ffc35a; --screen-na: #a9bdb3; --screen-label: #9fd2ff; --screen-limit: #ffc35a; --screen-how: #cdb8ff;
   --signal: #e2603f; --press: #0f3d2f;
   --f-retro: "Michroma", "Eurostile", "Arial Black", sans-serif;
   --r: 16px;
@@ -15,11 +22,13 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --paper: #0b1410; --sheet: #13211b; --tint: #182a22; --ink: #e6efe9; --muted: #9ab0a4; --rule: #2b3d34;
   --chrome: #46544d; --chrome-hi: rgba(255,255,255,.12); --chrome-lo: #050a08;
-  --screen: #06100b; --screen-track: #12261d; --signal: #ff8a6b; --press: #2f7d61; } }
+  --screen: #06100b; --screen-track: #12261d; --signal: #ff8a6b; --press: #2f7d61;
+  --plate-1: #8fc0f2; --plate-2: #c8a2f2; --plate-3: #e6c75a; --plate-4: #6fd0dc; --plate-5: #ff9a7a; --num: #9fd2ff; } }
 :root[data-theme="dark"] {
   --paper: #0b1410; --sheet: #13211b; --tint: #182a22; --ink: #e6efe9; --muted: #9ab0a4; --rule: #2b3d34;
   --chrome: #46544d; --chrome-hi: rgba(255,255,255,.12); --chrome-lo: #050a08;
   --screen: #06100b; --screen-track: #12261d; --signal: #ff8a6b; --press: #2f7d61;
+  --plate-1: #8fc0f2; --plate-2: #c8a2f2; --plate-3: #e6c75a; --plate-4: #6fd0dc; --plate-5: #ff9a7a; --num: #9fd2ff;
 }
 
 /* ---------- type: period face for short titles only ---------- */
@@ -89,7 +98,11 @@ details.localai, details.data, fieldset.details { border: 2px solid var(--rule);
   background: var(--screen); border: 2px solid var(--chrome); border-radius: 20px; color: var(--screen-ink);
   box-shadow: inset 0 2px 12px rgba(0,0,0,.5), 0 3px 0 var(--chrome-lo);
 }
-.meter .eyebrow, .meter .lim, .meter .how2, .meter .val small, .meter .altv span { color: var(--screen-dim); }
+.meter .val small, .meter .altv span { color: var(--screen-dim); }
+/* each kind of reading on the screen has its own hue: label, limit, how it was worked out */
+.meter .eyebrow { color: var(--screen-label); }
+.meter .lim { color: var(--screen-limit); }
+.meter .how2 { color: var(--screen-how); }
 .meter .term { text-decoration-color: color-mix(in srgb, var(--screen-ink) 55%, transparent); }
 .meter .val { font-family: var(--f-mono); font-weight: 600; letter-spacing: -.01em; color: var(--screen-ink); }
 .meter[data-s="pass"] .val { color: var(--screen-ink); }
@@ -126,5 +139,29 @@ details.localai, details.data, fieldset.details { border: 2px solid var(--rule);
 /* ---------- tooltip: a small readout ---------- */
 .tip-pop { background: var(--screen); color: #e6f7ee; border: 2px solid var(--chrome); border-radius: 14px; }
 .tip-pop b { color: var(--screen-ink); }
+
+/* ---------- color variation between cards ---------- */
+/* detail plates (batch, tested, lab, product type, ...) each get a hue for their bar and label */
+.meta > div { background: var(--tint); border: 2px solid var(--rule); border-top: 5px solid var(--plate, var(--plate-1)); border-radius: 14px; padding: 8px 12px 10px; }
+.meta > div:nth-child(5n+1) { --plate: var(--plate-1); } .meta > div:nth-child(5n+2) { --plate: var(--plate-2); }
+.meta > div:nth-child(5n+3) { --plate: var(--plate-3); } .meta > div:nth-child(5n+4) { --plate: var(--plate-4); }
+.meta > div:nth-child(5n+5) { --plate: var(--plate-5); }
+.meta dt, .meta dt .term { color: var(--plate); font-weight: 700; }
+.meta dd { font-size: 15.5px; }
+/* numbers in findings stand apart from the words */
+.check .n { font-weight: 700; color: var(--num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.check[data-s="fail"] h4 .n { color: var(--fail); }
+.check[data-s="warn"] h4 .n { color: var(--warn); }
+/* the two key limits in the header use different hues */
+.band .limit:nth-child(2) b { color: #ffc35a; }
+.band .limit:nth-child(2) { border-color: rgba(255,195,90,.45); }
+/* rulebook sections and notes cards: a colored bar and heading each */
+.rb-grid > section, .notes > div { border-top: 5px solid var(--plate, var(--plate-1)); }
+.rb-grid > section:nth-child(5n+1), .notes > div:nth-child(5n+1) { --plate: var(--plate-1); }
+.rb-grid > section:nth-child(5n+2), .notes > div:nth-child(5n+2) { --plate: var(--plate-2); }
+.rb-grid > section:nth-child(5n+3), .notes > div:nth-child(5n+3) { --plate: var(--plate-3); }
+.rb-grid > section:nth-child(5n+4), .notes > div:nth-child(5n+4) { --plate: var(--plate-4); }
+.rb-grid > section:nth-child(5n+5), .notes > div:nth-child(5n+5) { --plate: var(--plate-5); }
+.rb-grid > section h3:not([data-cat]), .notes h3 { color: var(--plate); }
 
 @media (prefers-reduced-motion: reduce) { .btn, .sample { transition: none; } .btn:active, .sample:active { transform: none; } }
