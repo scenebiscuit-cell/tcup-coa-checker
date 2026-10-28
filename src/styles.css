@@ -46,13 +46,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .band {
   color: var(--band-ink);
   background-color: var(--band-b);
+  /* soft organic light pools instead of a grid */
   background-image:
-    linear-gradient(var(--band-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--band-line) 1px, transparent 1px),
+    radial-gradient(60% 90% at 88% 0%, rgba(244,178,62,.16), transparent 60%),
+    radial-gradient(50% 70% at 70% 110%, rgba(180,240,221,.14), transparent 65%),
     linear-gradient(115deg, var(--band-a) 0%, var(--band-b) 48%, var(--band-c) 100%);
-  background-size: 28px 28px, 28px 28px, 100% 100%;
+  overflow: hidden;
 }
-.band-in { max-width: 1240px; margin: 0 auto; padding-block: 34px 30px; display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: flex-end; justify-content: space-between; }
+.band-in { max-width: 1240px; margin: 0 auto; padding-block: 30px 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 420px); gap: 20px 32px; align-items: end; }
+.band-copy { min-width: 0; }
+.band .limits { margin-top: 20px; }
 .band .eyebrow { color: var(--band-hi); }
 .band h1 { font-size: clamp(34px, 5.2vw, 56px); font-weight: 700; line-height: 1; letter-spacing: -0.005em; margin-top: 8px; }
 .band p { margin: 12px 0 0; color: var(--band-soft); max-width: 60ch; font-size: 16px; }
@@ -234,3 +237,43 @@ tr.bad td { color: var(--fail); font-weight: 700; }
 .foot b { color: var(--ink); font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- header art: the trichome crew ---------- */
+.band-art { align-self: stretch; display: flex; align-items: flex-end; justify-content: center; min-width: 0; margin-bottom: -28px; }
+.crew { width: 100%; max-width: 420px; height: auto; display: block; overflow: visible; }
+.crew .blob { fill: rgba(0,0,0,.14); }
+.crew .ground { fill: rgba(0,0,0,.2); }
+.crew .stalk { fill: url(#g-stalk); }
+.crew .clear .bulb { fill: url(#g-clear); }
+.crew .milky .bulb { fill: url(#g-milky); }
+.crew .amber .bulb { fill: url(#g-amber); }
+.crew .gloss { fill: #ffffff; opacity: .75; }
+.crew .sclera { fill: #ffffff; stroke: rgba(13,28,37,.18); stroke-width: 1; }
+.crew .pupil { fill: #0d1c25; }
+.crew .mouth { fill: none; stroke: #0d1c25; stroke-width: 2.4; stroke-linecap: round; transition: d .25s ease; }
+.crew .brow { fill: none; stroke: #0d1c25; stroke-width: 2.4; stroke-linecap: round; opacity: 0; transition: opacity .2s ease, transform .2s ease; }
+.crew .head, .crew .eye { transform-box: fill-box; transform-origin: 50% 100%; }
+.crew .eye { transform-origin: 50% 50%; }
+/* blink: eyes squash for a moment */
+.crew .tri.blink .eye { animation: crew-blink .18s ease-in-out; }
+@keyframes crew-blink { 50% { transform: scaleY(.1); } }
+/* a little bob when you hover one */
+.crew .tri { cursor: default; }
+.crew .tri:hover .head { animation: crew-bob .5s ease; }
+@keyframes crew-bob { 30% { transform: translateY(-5px) rotate(-3deg); } 65% { transform: translateY(1px) rotate(2deg); } }
+/* moods follow the verdict */
+.band-art[data-mood="review"] .brow { opacity: 1; }
+.band-art[data-mood="review"] .brow:nth-of-type(2) { transform: translateY(-3px); }
+.band-art[data-mood="hold"] .brow { opacity: 1; }
+.band-art[data-mood="hold"] .tri .brow:first-of-type { transform: rotate(-14deg); }
+.band-art[data-mood="hold"] .tri .brow:nth-of-type(2) { transform: rotate(14deg); }
+.crew .brow { transform-box: fill-box; transform-origin: 50% 50%; }
+.band-art.react .head { animation: crew-hop .45s cubic-bezier(.3,1.6,.5,1); }
+.band-art.react .milky .head { animation-delay: .06s; } .band-art.react .amber .head { animation-delay: .12s; }
+@keyframes crew-hop { 40% { transform: translateY(-9px); } }
+@media (prefers-reduced-motion: reduce) { .crew .head, .crew .eye { animation: none !important; } }
+@media (max-width: 760px) {
+  .band-in { grid-template-columns: minmax(0, 1fr); }
+  .band-art { order: -1; justify-content: flex-end; margin: -14px 0 -24px; }
+  .crew { max-width: 220px; }
+}

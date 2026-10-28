@@ -48,6 +48,10 @@ The design keeps reading and judging apart. Reading a COA is the hard, fuzzy par
 
 The public demo runs entirely in the browser, and nothing is uploaded. It accepts COA PDFs that contain text (most lab-issued PDFs) and extracts the text with pdf.js. Scanned or photographed COAs have no text layer and need the AI version. A version of this tool runs inside Claude, where an AI model reads unfamiliar COA layouts, scanned PDFs, and photos into the same structured fields. The rules engine still makes every compliance call.
 
+### The header
+
+Three abstract vector trichomes, in the clear, milky, and amber colors growers watch for, follow the cursor with their eyes and react to each verdict: happy for Clear, a raised brow for Review, worried for Hold. The tall one wears a cowboy hat, since this checker is Texas-only. They're decorative, hidden from screen readers, and still for people who prefer reduced motion.
+
 ## Use a local AI model (Ollama)
 
 The built-in parser covers simple and common lab layouts. For any layout, including scanned PDFs and phone photos, connect a model running on your own computer. The COA never leaves your machine.

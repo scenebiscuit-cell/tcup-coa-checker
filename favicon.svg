@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#094a52"/>
+  <path d="M11 36 L5 31 L13 29 L9 24 L18 26 L46 26 L55 24 L51 29 L59 31 L53 36 Z" fill="#f4f7f8"/>
+  <defs><radialGradient id="a" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffe3a6"/><stop offset=".55" stop-color="#f4b23e"/><stop offset="1" stop-color="#c97a12"/></radialGradient></defs>
+  <circle cx="32" cy="38" r="18" fill="url(#a)"/>
+  <path d="M14 34 H50" stroke="#0d1c25" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="24" cy="34" r="7.5" fill="#b4f0dd" stroke="#0d1c25" stroke-width="3.2"/>
+  <circle cx="40" cy="34" r="7.5" fill="#b4f0dd" stroke="#0d1c25" stroke-width="3.2"/>
+  <circle cx="22.5" cy="33" r="2.6" fill="#0d1c25"/><circle cx="42" cy="35.5" r="2.6" fill="#0d1c25"/>
+  <path d="M25 46 Q32 52 39 46" fill="none" stroke="#0d1c25" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M2 14 Q4 29 32 28 Q60 29 62 14 Q58 23 32 23 Q6 23 2 14 Z" fill="#8a5a1e"/>
+  <path d="M17 25 C16 15 18 5 24 5 Q28 9 32 7 Q36 9 40 5 C46 5 48 15 47 25 Q32 27 17 25 Z" fill="#b8843a"/>
+  <path d="M32 8 Q31 14 32 19" fill="none" stroke="#8a5a1e" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M16.6 20 Q32 22.5 47.4 20 L47.2 24.4 Q32 26.6 16.8 24.4 Z" fill="#3b2412"/>
+</svg>

@@ -9,7 +9,9 @@
 <meta property="og:title" content="TCUP COA Checker">
 <meta property="og:description" content="Checks a lab COA against Texas Compassionate Use Program rules, with a citation for every finding.">
 <meta property="og:image" content="docs/screenshot-desktop.png">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23094a52'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='%23b4f0dd' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -19,15 +21,74 @@
 
 <header class="band">
   <div class="band-in gutter">
-    <div>
+    <div class="band-copy">
       <div class="eyebrow">Texas Compassionate Use Program · Lab COA review</div>
       <h1>TCUP COA Checker</h1>
       <p>Paste or upload a certificate of analysis. The checker pulls out potency and contaminant results and tests them against <b>Texas medical cannabis rules</b>, with the citation for every finding.</p>
+      <div class="limits" aria-label="Limits applied">
+        <div class="limit"><b>10 mg</b><span>THC per dosage unit</span><small>HB 46 · 2025</small></div>
+        <div class="limit"><b>1 g</b><span>THC per package or device</span><small>HB 46 · 2025</small></div>
+      </div>
     </div>
-    <div class="limits" aria-label="Limits applied">
-      <div class="limit"><b>10 mg</b><span>THC per dosage unit</span><small>HB 46 · 2025</small></div>
-      <div class="limit"><b>1 g</b><span>THC per package or device</span><small>HB 46 · 2025</small></div>
+    <div class="band-art" id="crew" data-mood="idle" data-hat="always">
+    <svg class="crew" viewBox="0 0 372 270" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="g-clear" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d9f7ee"/><stop offset="1" stop-color="#9fe3cf"/></radialGradient>
+        <radialGradient id="g-milky" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#f1eee6"/><stop offset="1" stop-color="#d6d1c3"/></radialGradient>
+        <radialGradient id="g-amber" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffe3a6"/><stop offset=".55" stop-color="#f4b23e"/><stop offset="1" stop-color="#c97a12"/></radialGradient>
+        <linearGradient id="g-stalk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7f5ea" stop-opacity=".95"/><stop offset="1" stop-color="#7cc9ab" stop-opacity=".9"/></linearGradient>
+        <linearGradient id="g-fan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b4f0dd" stop-opacity=".28"/><stop offset="1" stop-color="#b4f0dd" stop-opacity=".04"/></linearGradient>
+      </defs>
+      <path class="blob" d="M18 214c-6-44 30-78 74-80 40-2 58 24 92 20 38-4 62-34 104-24 44 10 66 50 60 92-2 18-10 36-22 48H38c-12-14-18-34-20-56z"/>
+      <g class="fan" fill="url(#g-fan)">
+        <rect x="175.0" y="184.0" width="22" height="78" rx="11.0" transform="rotate(-78 186 262)"/>
+        <rect x="173.0" y="144.0" width="26" height="118" rx="13.0" transform="rotate(-52 186 262)"/>
+        <rect x="171.0" y="104.0" width="30" height="158" rx="15.0" transform="rotate(-26 186 262)"/>
+        <rect x="170.0" y="80.0" width="32" height="182" rx="16.0" transform="rotate(0 186 262)"/>
+        <rect x="171.0" y="104.0" width="30" height="158" rx="15.0" transform="rotate(26 186 262)"/>
+        <rect x="173.0" y="144.0" width="26" height="118" rx="13.0" transform="rotate(52 186 262)"/>
+        <rect x="175.0" y="184.0" width="22" height="78" rx="11.0" transform="rotate(78 186 262)"/>
+      </g>
+      <path class="ground" d="M0 246c60-14 120-18 186-14s126 10 186-2v40H0z"/>
+
+      <g class="tri amber" data-mx="92.0" data-my="179.7" data-r="33">
+        <path class="stalk" d="M76.8 246 C76.8 218.1 82.1 179.0 82.1 185.7 L101.9 185.7 C101.9 179.0 107.2 218.1 107.2 246 Z"/>
+        <g class="head">
+          <circle class="bulb" cx="92" cy="165.8" r="33"/>
+          <ellipse class="gloss" cx="79.5" cy="150.0" rx="8.6" ry="5.0" transform="rotate(-28 79.5 150.0)"/>
+          <g class="eye" data-x="80.1" data-y="163.9"><ellipse class="sclera" cx="80.1" cy="163.9" rx="6.6" ry="7.9"/><circle class="pupil" cx="80.1" cy="163.9" r="3.6"/></g>
+          <g class="eye" data-x="103.9" data-y="163.9"><ellipse class="sclera" cx="103.9" cy="163.9" rx="6.6" ry="7.9"/><circle class="pupil" cx="103.9" cy="163.9" r="3.6"/></g>
+          <path class="brow" d="M74.2 152.0 Q80.1 149.0 86.1 152.0"/><path class="brow" d="M97.9 152.0 Q103.9 149.0 109.8 152.0"/>
+          <path class="mouth" d=""/>
+        </g>
+      </g>
+
+      <g class="tri clear" data-mx="190.0" data-my="124.8" data-r="40">
+        <path class="stalk" d="M171.6 246 C171.6 193.8 178.0 124.0 178.0 132.0 L202.0 132.0 C202.0 124.0 208.4 193.8 208.4 246 Z"/>
+        <g class="head">
+          <circle class="bulb" cx="190" cy="108.0" r="40"/>
+          <ellipse class="gloss" cx="174.8" cy="88.8" rx="10.4" ry="6.0" transform="rotate(-28 174.8 88.8)"/>
+          <g class="eye" data-x="175.6" data-y="105.6"><ellipse class="sclera" cx="175.6" cy="105.6" rx="8.0" ry="9.6"/><circle class="pupil" cx="175.6" cy="105.6" r="4.4"/></g>
+          <g class="eye" data-x="204.4" data-y="105.6"><ellipse class="sclera" cx="204.4" cy="105.6" rx="8.0" ry="9.6"/><circle class="pupil" cx="204.4" cy="105.6" r="4.4"/></g>
+          <path class="brow" d="M168.4 92.0 Q175.6 89.0 182.8 92.0"/><path class="brow" d="M197.2 92.0 Q204.4 89.0 211.6 92.0"/>
+          <path class="mouth" d=""/>
+        </g>
+      </g>
+
+      <g class="tri milky" data-mx="286.0" data-my="156.0" data-r="31">
+        <path class="stalk" d="M271.7 246 C271.7 207.3 276.7 155.3 276.7 161.5 L295.3 161.5 C295.3 155.3 300.3 207.3 300.3 246 Z"/>
+        <g class="head">
+          <circle class="bulb" cx="286" cy="142.9" r="31"/>
+          <ellipse class="gloss" cx="274.2" cy="128.1" rx="8.1" ry="4.6" transform="rotate(-28 274.2 128.1)"/>
+          <g class="eye" data-x="274.8" data-y="141.1"><ellipse class="sclera" cx="274.8" cy="141.1" rx="6.2" ry="7.4"/><circle class="pupil" cx="274.8" cy="141.1" r="3.4"/></g>
+          <g class="eye" data-x="297.2" data-y="141.1"><ellipse class="sclera" cx="297.2" cy="141.1" rx="6.2" ry="7.4"/><circle class="pupil" cx="297.2" cy="141.1" r="3.4"/></g>
+          <path class="brow" d="M269.3 129.6 Q274.8 126.6 280.4 129.6"/><path class="brow" d="M291.6 129.6 Q297.2 126.6 302.7 129.6"/>
+          <path class="mouth" d=""/>
+        </g>
+      </g>
+    </svg>
     </div>
+  </div>
   </div>
 </header>
 
@@ -129,6 +190,7 @@
   </footer>
 </main>
 
+<script src="src/header-art.js"></script>
 <script src="src/core.js"></script>
 <script src="src/samples.js"></script>
 <script src="src/app.js"></script>
