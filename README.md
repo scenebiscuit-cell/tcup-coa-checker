@@ -87,7 +87,7 @@ npx serve .        # or: python3 -m http.server
 npm test           # Node 18+
 ```
 
-<img src="docs/screenshot-mobile.png" alt="The compliance report on a phone in dark mode" width="280">
+<img src="docs/screenshot-mobile.png" alt="The compliance report on a phone in dark mode: a HOLD verdict for a gummy with three failures, one item to review, and five passes" width="280">
 
 ## Disclaimer
 
