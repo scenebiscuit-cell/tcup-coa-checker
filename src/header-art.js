@@ -268,9 +268,10 @@
       else { mini.classList.remove("corner"); slot.insertBefore(mini, anchor); }
     };
     place(); phone.addEventListener?.("change", place);
-    // show it only while the header is out of view
+    // show it once less than 15% of the header art is on screen. Both thresholds are needed: with only 0.15,
+    // a slow scroll crosses it while the art is still partly visible and never reports leaving entirely.
     if ("IntersectionObserver" in window)
-      new IntersectionObserver(([en]) => mini.classList.toggle("show", !en.isIntersecting), { threshold: 0.15 }).observe(root);
+      new IntersectionObserver(([en]) => mini.classList.toggle("show", en.intersectionRatio < 0.15), { threshold: [0, 0.15] }).observe(root);
   }
   /* the small copy's bodies, drawn around the head's centre at the size of a 29-unit head.
      The eyes sit at about (±11.6, 2.9). Each part: [path, fill, { stroke, width, opacity }] */
