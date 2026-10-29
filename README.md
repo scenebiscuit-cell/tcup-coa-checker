@@ -50,7 +50,7 @@ The public demo runs entirely in the browser, and nothing is uploaded. It accept
 
 ### The header
 
-A microscope view of trichomes on the leaf surface, with smooth stalks and glossy resin heads in the clear, milky, and amber colors growers watch for, on a flat, film-grain forest green. The three tallest have eyes that follow the cursor and show each verdict: excited for Clear (rosy cheeks and sparkles), heavy skeptical eyelids for Review, sad eyes and a tear for Hold. The tall one wears a cowboy hat, since this checker is Texas-only. They're decorative, hidden from screen readers, and still for people who prefer reduced motion.
+A microscope view of trichomes on the leaf surface, with smooth stalks and glossy resin heads in the clear, milky, and amber colors growers watch for, on a flat, film-grain forest green. The three tallest have eyes that follow the cursor and show each verdict: excited for Clear (rosy cheeks and sparkles), heavy skeptical eyelids for Review, sad eyes and a tear for Hold. The tall one wears a cowboy hat, since this checker is Texas-only. Once you scroll past the header, a small copy of it (same face, same hat) waits in the bottom corner, so you still see it react when a verdict changes. They're decorative, hidden from screen readers, and still for people who prefer reduced motion.
 
 Each kind of lab test (cannabinoids, solvents, pesticides, microbials, metals, and more) gets its own color and a larger, bolder heading in the lab results, so a long COA is quicker to scan.
 

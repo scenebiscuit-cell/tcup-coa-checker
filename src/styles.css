@@ -309,3 +309,15 @@ tr.bad td { color: var(--fail); font-weight: 700; }
 .catblock .ptitle { font-family: var(--f-display); font-size: 19px; font-weight: 700; color: var(--c); margin: 2px 0 6px; letter-spacing: .005em; }
 .catblock .ptitle .term { text-decoration-color: color-mix(in srgb, var(--c) 60%, transparent); }
 .catblock .ptitle .sub { font-family: var(--f-body); color: var(--muted); }
+
+/* ---------- the mini trichome: a small copy of the tall one once the header has scrolled away ---------- */
+.band-art.crew-mini { display: block; flex: none; order: 0; margin: 0 0 0 auto; width: 40px; height: 40px; pointer-events: none;
+  opacity: 0; transform: translateY(-6px) scale(.7); transition: opacity .25s ease, transform .3s cubic-bezier(.3,1.5,.5,1); }
+.band-art.crew-mini.show { opacity: 1; transform: none; }
+.crew-mini .crew { width: 100%; max-width: none; height: 100%; overflow: visible; }
+.crew-mini .mini-bg { fill: var(--band); stroke: #f6f1e8; stroke-width: 3; }
+.crew-mini ~ .secnav-rule { margin-left: 0; }
+/* on pages without a sticky nav it sits in the bottom corner, clear of the content's edge */
+.band-art.crew-mini.corner { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 30; width: 52px; height: 52px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
+@media (prefers-reduced-motion: reduce) { .band-art.crew-mini { transition: opacity .2s linear; transform: none; } }
