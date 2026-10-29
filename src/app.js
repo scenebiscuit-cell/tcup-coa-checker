@@ -542,10 +542,10 @@
         return `<tr class="${bad ? "bad" : ""}"><td>${esc(a.name)}</td><td class="num">${esc(a.result)}</td><td class="num">${esc(a.limit ?? "—")}</td><td class="num">${esc(a.unit ?? "")}</td></tr>`;
       }).join("");
       const st = pn.status === "not tested" ? "nt" : pn.status;
-      return `<div><div class="ptitle">${esc(CORE.CATEGORY_LABEL[pn.category] || pn.name)} <span class="mini ${st}">${esc(pn.status)}</span></div>
+      return `<div class="catblock" data-cat="${esc(pn.category)}"><div class="ptitle">${esc(CORE.CATEGORY_LABEL[pn.category] || pn.name)} <span class="mini ${st}">${esc(pn.status)}</span></div>
         ${rows ? `<div class="tbl"><table><thead><tr><th>Analyte</th><th>Result</th><th>Limit</th><th>Unit</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}</div>`;
     }).join("");
-    $("tables").innerHTML = `<div><div class="ptitle">Cannabinoids <span class="sub"><span class="thcmark">●</span> counted toward total THC</span></div>
+    $("tables").innerHTML = `<div class="catblock" data-cat="potency"><div class="ptitle">Cannabinoids <span class="sub"><span class="thcmark">●</span> counted toward total THC</span></div>
       <div class="tbl"><table><thead><tr><th>Cannabinoid</th><th>Result</th><th>Unit</th></tr></thead><tbody>${cRows}</tbody></table></div></div>${pHtml || "<p class='status'>No contaminant panels found.</p>"}`;
   }
 

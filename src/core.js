@@ -217,11 +217,28 @@ const CORE = (() => {
     return line.trimEnd();
   }
 
+  /* the kind of concentrate, as the COA words it: "Live Rosin", "Shatter", "Live Resin Badder".
+     "Concentrate" is the category the rules use; this is detail for people, not for the rules. */
+  const CONC_WORDS = "(?:(?:live|cured|cold[- ]cure[d]?|fresh[- ]press(?:ed)?|ice[- ]water|bubble|full[- ]melt|hash|solventless|thc-?a|whole[- ]plant)\\s+)*" +
+    "(?:rosin|resin|badder|batter|budder|sugar|sauce|diamonds|shatter|crumble|wax|distillate|kief|hash|dry[- ]sift|rso|rick simpson oil|isolate|jam|co2 oil|bho|pho)" +
+    "(?:\\s+(?:badder|batter|budder|sugar|sauce|diamonds|jam))?";
+  const CONC_RE = new RegExp(`\\b${CONC_WORDS}\\b`, "i");
+  const tidy = (t) => t.trim().replace(/\s+/g, " ").replace(/\b(rso|bho|pho|co2|thc-?a)\b/gi, (m) => m.toUpperCase())
+    .replace(/(^|\s)([a-z])/g, (m, sp, ch) => sp + ch.toUpperCase());
+  function concentrateType(form, name, explicit) {
+    if (explicit && String(explicit).trim()) return tidy(String(explicit));
+    // "Concentrate (live resin badder)" or "Concentrate - Shatter"
+    const inner = String(form || "").match(/concentrate\s*(?:\(([^)]+)\)|[-–—:]\s*(.+))/i);
+    if (inner) return tidy(inner[1] || inner[2]);
+    for (const t of [form, name]) { const m = String(t || "").match(CONC_RE); if (m) return tidy(m[0]); }
+    return null;
+  }
+
   function parseText(text) {
     const out = {
       lab: { name: null, accreditation: null }, client: null,
       product: { name: null, form: null, batch: null, units_per_package: null, unit_size: null,
-                 unit_size_unit: null, net_content: null, net_content_unit: null },
+                 unit_size_unit: null, net_content: null, net_content_unit: null, concentrate_type: null },
       dates: { collected: null, tested: null, reported: null },
       cannabinoids: [], reported_totals: { total_thc: null, total_cbd: null }, panels: [],
     };
@@ -330,6 +347,10 @@ const CORE = (() => {
       /^\s*(servings|units|pieces|count|doses)\s*:\s*(.+)$/i));
     [out.product.unit_size, out.product.unit_size_unit] = sizeOf(field(
       /^\s*(?:retail\s+)?(dosage unit size|unit size|unit weight|serving size|dose size|piece weight|serving weight|unit mass)\s*:\s*(.+)$/i));
+    // the kind of concentrate: its own field if the lab prints one, otherwise from the form or product name
+    const ctype = field(/^\s*(concentrate type|extract(?:ion)? type|concentrate|extract|sub-?category|sub-?type|product sub-?type|consistency|texture)\s*:\s*(.+)$/i);
+    if (["concentrate", "inhalation"].includes(formClass(out.product.form)) || (ctype && CONC_RE.test(ctype)))
+      out.product.concentrate_type = concentrateType(out.product.form, out.product.name, ctype);
     [out.product.net_content, out.product.net_content_unit] = sizeOf(field(
       /^\s*(net (?:wt\.?|weight|contents?|volume|quantity)|(?:retail\s+)?(?:product|package|container) size)\s*:\s*(.+)$/i));
 

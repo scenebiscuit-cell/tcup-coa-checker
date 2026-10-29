@@ -11,6 +11,8 @@
   --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --r: 8px;
+  --cat-potency: #7b3fb8; --cat-residual_solvents: #1d67b0; --cat-pesticides: #a04c0c; --cat-fungicides: #9a3a2a; --cat-fertilizers: #4e7d1a; --cat-mycotoxins: #7f6200;
+  --cat-microbials: #b02a64; --cat-heavy_metals: #4d5b6c; --cat-moisture: #00788a; --cat-foreign_matter: #7a4f2f; --cat-terpenes: #2b7f38; --cat-other: #55626b;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -20,6 +22,8 @@
   --accent: #7fd6b0; --accent-ink: #0a1511; --accent-soft: #163a2d;
   --pass: #5fcf8e; --pass-soft: #12301f; --warn: #f0ae45; --warn-soft: #36280d; --fail: #ff7a6e; --fail-soft: #3d1714; --info: #a6b9c5; --info-soft: #1b2932;
   --on-sem: #0b1318;
+  --cat-potency: #c8a2f2; --cat-residual_solvents: #8fc0f2; --cat-pesticides: #f2a86b; --cat-fungicides: #f09a8a; --cat-fertilizers: #a9d36b; --cat-mycotoxins: #e6c75a;
+  --cat-microbials: #f28ab7; --cat-heavy_metals: #b3c0cf; --cat-moisture: #6fd0dc; --cat-foreign_matter: #d9ab86; --cat-terpenes: #86d494; --cat-other: #aab6bf;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --paper: #0a1511; --sheet: #10201a; --ink: #e2ece7; --muted: #93ab9f; --rule: #22382f; --tint: #142820;
@@ -28,6 +32,8 @@
   --accent: #7fd6b0; --accent-ink: #0a1511; --accent-soft: #163a2d;
   --pass: #5fcf8e; --pass-soft: #12301f; --warn: #f0ae45; --warn-soft: #36280d; --fail: #ff7a6e; --fail-soft: #3d1714; --info: #a6b9c5; --info-soft: #1b2932;
   --on-sem: #0b1318;
+  --cat-potency: #c8a2f2; --cat-residual_solvents: #8fc0f2; --cat-pesticides: #f2a86b; --cat-fungicides: #f09a8a; --cat-fertilizers: #a9d36b; --cat-mycotoxins: #e6c75a;
+  --cat-microbials: #f28ab7; --cat-heavy_metals: #b3c0cf; --cat-moisture: #6fd0dc; --cat-foreign_matter: #d9ab86; --cat-terpenes: #86d494; --cat-other: #aab6bf;
   color-scheme: dark; }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -268,15 +274,38 @@ tr.bad td { color: var(--fail); font-weight: 700; }
 /* moods follow the verdict, told with the eyes only */
 .band-art[data-mood="clear"] .open { opacity: 0; }
 .band-art[data-mood="clear"] .happy { opacity: 1; }
-.band-art[data-mood="review"] .eye.r { transform: scaleY(.55); }
-.band-art[data-mood="hold"] .eye { transform: scale(1.08); }
-.band-art[data-mood="hold"] .dot { transform: scale(.8); }
+/* review and hold: header-art.js lowers a lid line and clips the eye under it (skeptical squint, or sad) */
+.crew .lid { fill: none; stroke: #1d1533; stroke-linecap: round; opacity: 0; }
+.band-art[data-mood="review"] .lid { opacity: 1; }
+.band-art[data-mood="hold"] .lid { opacity: 1; }
+/* hold: sad eyes and a tear */
+.crew .tear { fill: #9ad8ff; stroke: #ffffff; stroke-width: .6; opacity: 0; transition: opacity .3s ease; }
+.band-art[data-mood="hold"] .tear { opacity: .95; }
+/* clear: an excited face. happy eyes, rosy cheeks, and sparkles that twinkle */
+.crew .blush { fill: #ff8fa3; opacity: 0; transition: opacity .3s ease; }
+.band-art[data-mood="clear"] .blush { opacity: .5; }
+.crew .spark { fill: #fff6c9; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; transition: opacity .3s ease; }
+.band-art[data-mood="clear"] .spark { opacity: .95; animation: crew-twinkle 1.6s ease-in-out infinite; }
+@keyframes crew-twinkle { 50% { transform: scale(.55) rotate(20deg); opacity: .55; } }
 .band-art.react .fg .head { animation: crew-hop .45s cubic-bezier(.3,1.6,.5,1); }
 .band-art.react .milky .head { animation-delay: .06s; } .band-art.react .amber .head { animation-delay: .12s; }
 @keyframes crew-hop { 40% { transform: translateY(-8px); } }
-@media (prefers-reduced-motion: reduce) { .crew .head, .crew .eye { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .crew .head, .crew .eye, .crew .spark { animation: none !important; } }
 @media (max-width: 760px) {
   .band-in { grid-template-columns: minmax(0, 1fr); }
   .band-art { order: -1; justify-content: flex-end; margin: -10px 0 -6px; }
   .crew { max-width: 170px; }
 }
+
+/* ---------- category colors: one hue per kind of test ---------- */
+[data-cat] { --c: var(--cat-other); }
+[data-cat="potency"] { --c: var(--cat-potency); } [data-cat="residual_solvents"] { --c: var(--cat-residual_solvents); }
+[data-cat="pesticides"] { --c: var(--cat-pesticides); } [data-cat="fungicides"] { --c: var(--cat-fungicides); }
+[data-cat="fertilizers"] { --c: var(--cat-fertilizers); } [data-cat="mycotoxins"] { --c: var(--cat-mycotoxins); }
+[data-cat="microbials"] { --c: var(--cat-microbials); } [data-cat="heavy_metals"] { --c: var(--cat-heavy_metals); }
+[data-cat="moisture"] { --c: var(--cat-moisture); } [data-cat="foreign_matter"] { --c: var(--cat-foreign_matter); }
+[data-cat="terpenes"] { --c: var(--cat-terpenes); }
+.catblock { border-left: 4px solid var(--c); padding-left: 12px; }
+.catblock .ptitle { font-family: var(--f-display); font-size: 19px; font-weight: 700; color: var(--c); margin: 2px 0 6px; letter-spacing: .005em; }
+.catblock .ptitle .term { text-decoration-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.catblock .ptitle .sub { font-family: var(--f-body); color: var(--muted); }
