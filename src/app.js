@@ -500,6 +500,7 @@
     const head = { hold: ["Hold", "Don't dispense until the failures are resolved."], review: ["Review", "No hard failures, but some items need a person to confirm."], clear: ["Clear", "Nothing on this COA conflicts with the TCUP rules checked here."] }[r.verdict];
     const pills = ["fail", "warn", "pass", "info"].filter(k => r.counts[k]).map(k => `<span class="pill ${k}">${r.counts[k]} ${{ fail: "fail", warn: "to review", pass: "pass", info: "note" }[k]}${k === "fail" && r.counts[k] > 1 ? "s" : ""}${k === "info" && r.counts[k] > 1 ? "s" : ""}</span>`).join("");
     if ($("verdict").dataset.v !== r.verdict) window.HeaderArt?.mood(r.verdict);   // the header trichomes react to the verdict
+    window.HeaderArt?.body?.(CORE.formClass(p.form));   // the small scrolling copy takes the product's shape
     $("verdict").dataset.v = r.verdict;
     $("verdict").innerHTML = `<div class="stamp">${head[0]}</div><div class="vtext"><h3>${esc(p.name || "Unnamed product")}</h3><p>${head[1]}</p><div class="counts">${pills}</div></div>`;
 

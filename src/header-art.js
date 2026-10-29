@@ -5,7 +5,10 @@
    "cowboy" (Texas), "fedora" (federal hemp), "beanie" (Colorado), "straw" (Missouri straw hat),
    "bush" (a wide-brimmed California bush hat). hat(true) means "cowboy".
    Once the header scrolls out of view, a small copy of the tall trichome (same face, same hat) appears
-   in the sticky nav (#crewMini) or, on pages without one, in the bottom corner, so the reactions stay visible. */
+   in the sticky nav (#crewMini) or, on pages without one, in the bottom corner, so the reactions stay visible.
+   window.HeaderArt.body(formClass) dresses that small copy as the product being checked: a trichome with the
+   state's hat for concentrates, a leaf for flower, a dropper bottle for tinctures, a gummy for edibles, and a
+   510 cartridge for vapes. Same eyes and expressions on every body. */
 (function () {
   "use strict";
   const root = document.getElementById("crew");
@@ -269,6 +272,80 @@
     if ("IntersectionObserver" in window)
       new IntersectionObserver(([en]) => mini.classList.toggle("show", !en.isIntersecting), { threshold: 0.15 }).observe(root);
   }
+  /* the small copy's bodies, drawn around the head's centre at the size of a 29-unit head.
+     The eyes sit at about (±11.6, 2.9). Each part: [path, fill, { stroke, width, opacity }] */
+  function lensLeaf(angle, len, wid) {     // one smooth, pointed leaflet growing from the leaf's base
+    const a = angle * Math.PI / 180, bx = 0, by = 34, tx = bx + Math.sin(a) * len, ty = by - Math.cos(a) * len;
+    const mx = (bx + tx) / 2, my = (by + ty) / 2, nx = Math.cos(a) * wid, ny = Math.sin(a) * wid;
+    const f = (n) => n.toFixed(1);
+    return `M${bx} ${by} Q${f(mx - nx)} ${f(my - ny)} ${f(tx)} ${f(ty)} Q${f(mx + nx)} ${f(my + ny)} ${bx} ${by} Z`;
+  }
+  function vein(angle, len) {
+    const a = angle * Math.PI / 180;
+    return `M0 34 L${(Math.sin(a) * len * 0.72).toFixed(1)} ${(34 - Math.cos(a) * len * 0.72).toFixed(1)}`;
+  }
+  const SIDE = [[110, 24, 11], [75, 42, 18], [40, 58, 24]];
+  const BODIES = {
+    // flower: a seven-leaflet cannabis leaf, the face on the centre leaflet
+    leaf: [
+      ["M0 33 L0 43", "none", { stroke: "#3f8a56", width: 3 }],
+      ...SIDE.flatMap(([ang, len, wid]) => [[lensLeaf(-ang, len, wid), "#3f9659"], [lensLeaf(ang, len, wid), "#3f9659"]]),
+      ...SIDE.flatMap(([ang, len]) => [[vein(-ang, len), "none", { stroke: "#8fd3a3", width: 1, opacity: .7 }], [vein(ang, len), "none", { stroke: "#8fd3a3", width: 1, opacity: .7 }]]),
+      [lensLeaf(0, 74, 40), "#5cc07a"],
+      ["M-9 -14 Q-6 -24 -2 -30", "none", { stroke: "#ffffff", width: 3, opacity: .55 }],
+    ],
+    // tincture: an amber glass dropper bottle with a black rubber bulb and a cream label
+    dropper: [
+      ["M-7 -30 V-40 Q-7 -50 0 -50 Q7 -50 7 -40 V-30 Z", "#3b3e44"],
+      ["M-3.5 -44 Q-3 -47.5 0 -48", "none", { stroke: "#ffffff", width: 1.6, opacity: .45 }],
+      ["M-11 -31 H11 V-21 H-11 Z", "#2b2d31"],
+      ["M-11 -27.6 H11 M-11 -24.4 H11", "none", { stroke: "#4a4e55", width: 0.8 }],
+      ["M-9 -22 H9 V-17 Q21 -15 21 -3 V27 Q21 36 12 36 H-12 Q-21 36 -21 27 V-3 Q-21 -15 -9 -17 Z", "#c46f1c"],
+      ["M-21 16 H21 V29 H-21 Z", "#f3e6c8"],
+      ["M-13 21 H13 M-9 24.6 H9", "none", { stroke: "#c9b68f", width: 1.2 }],
+      ["M-15.5 -6 Q-16.5 4 -15.5 13", "none", { stroke: "#f2b468", width: 3, opacity: .75 }],
+    ],
+    // edibles: a sugared gumdrop
+    gummy: [
+      ["M-24 32 Q-27.5 31.5 -26 25 Q-20 -30 0 -32 Q20 -30 26 25 Q27.5 31.5 24 32 Q0 37 -24 32 Z", "#ff5d7a"],
+      ["M-25 28 Q0 33.5 25 28 Q24 32 21 32.5 Q0 36 -21 32.5 Q-24 32 -25 28 Z", "#d9405f"],
+      ["M-14 -14 Q-9 -25 1 -27", "none", { stroke: "#ffffff", width: 3.4, opacity: .6 }],
+      ...[[-16, 16], [-6, 24], [9, 21], [17, 12], [14, -10], [-18, 1], [4, -20]].map(([x, y]) =>
+        [`M${x - 1.2} ${y - 1.2} h2.4 v2.4 h-2.4 Z`, "#ffffff", { opacity: .7 }]),
+    ],
+    // vapes: a 510-thread cartridge, golden oil in a glass tank around the centre post
+    cart: [
+      ["M-7 -48 H7 Q9 -48 9.5 -44 L11 -34 H-11 L-9.5 -44 Q-9 -48 -7 -48 Z", "#26282c"],
+      ["M-13 -34 H13 V-29 H-13 Z", "#8a9098"],
+      ["M-20 -25 Q-20 -29 -16 -29 H16 Q20 -29 20 -25 V22 Q20 26 16 26 H-16 Q-20 26 -20 22 Z", "#e6f2f2", { stroke: "#cfe0e0", width: 1 }],
+      ["M-18 -17 H18 V21 Q18 24 15 24 H-15 Q-18 24 -18 21 Z", "#e5a53a"],
+      ["M-2.5 -29 H2.5 V26 H-2.5 Z", "#b7bec6", { opacity: .85 }],
+      ["M-16 -25 V20", "none", { stroke: "#ffffff", width: 2.4, opacity: .55 }],
+      ["M-20 26 H20 V33 H-20 Z", "#a7aeb6"],
+      ["M-20 29.5 H20", "none", { stroke: "#8a9098", width: 1 }],
+      ["M-10 33 H10 V39 H-10 Z", "#8a9098"],
+      ["M-10 34.8 H10 M-10 37 H10", "none", { stroke: "#5f656c", width: 0.9 }],
+    ],
+  };
+  // which body goes with which product category (CORE.formClass)
+  const BODY_OF = { concentrate: "trichome", smokable: "leaf", tincture: "dropper", edible: "gummy", capsule: "gummy", ode: "gummy", inhalation: "cart" };
+  let miniBody = "trichome";
+  function body(formClass) {
+    const b = BODY_OF[formClass] || "trichome";
+    if (b !== miniBody) { miniBody = b; syncMini(); }
+  }
+  function drawBody(name, x, y, r) {
+    const g = document.createElementNS(NS_, "g");
+    g.setAttribute("class", "body"); g.setAttribute("transform", `translate(${x} ${y}) scale(${(r / 29).toFixed(3)})`);
+    for (const [d, fill, o = {}] of BODIES[name]) {
+      const p = document.createElementNS(NS_, "path");
+      p.setAttribute("d", d); p.setAttribute("fill", fill);
+      if (o.stroke) { p.setAttribute("stroke", o.stroke); p.setAttribute("stroke-width", o.width || 1); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round"); }
+      if (o.opacity) p.setAttribute("opacity", o.opacity);
+      g.append(p);
+    }
+    return g;
+  }
   function syncMini() {
     if (!miniSvg) return;
     const x = +tall.dataset.hx, y = +tall.dataset.hy, r = +tall.dataset.hr;
@@ -277,6 +354,10 @@
     bg.setAttribute("class", "mini-bg"); bg.setAttribute("cx", x); bg.setAttribute("cy", y + r * 0.1); bg.setAttribute("r", (r * 1.32).toFixed(1));
     const head = tall.querySelector(".head").cloneNode(true);
     head.querySelectorAll(".spark").forEach(sp => sp.remove());   // too busy at this size
+    if (miniBody !== "trichome") {     // swap the resin head (and its hat) for the product's body; keep the face
+      head.querySelectorAll(".membrane, .gloss, .hat").forEach(el => el.remove());
+      head.prepend(drawBody(miniBody, x, y, r));
+    }
     g.append(head);
     miniSvg.replaceChildren(bg, g);
     mini.dataset.mood = root.dataset.mood;
@@ -286,5 +367,5 @@
 
   mood("idle");
   if (root.dataset.hat === "always") hat("cowboy");    // the Texas-only checker: the cowboy hat stays on
-  window.HeaderArt = { mood, hat };
+  window.HeaderArt = { mood, hat, body };
 })();

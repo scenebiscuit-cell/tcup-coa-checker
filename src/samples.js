@@ -66,7 +66,7 @@ Cadmium   ND   0.2   µg/g   Pass
 Lead   0.05   0.5   µg/g   Pass
 Mercury   ND   0.1   µg/g   Pass
 `},
-{ id: "gummy", label: "Gummies", hint: "Over the dose cap",
+{ id: "gummy", label: "Edibles", hint: "Over the dose cap",
 text: `CERTIFICATE OF ANALYSIS
 Llano Uplift Labs (fictional sample lab)
 Accreditation: ISO/IEC 17025 · Cert. 9999.02 (sample)
