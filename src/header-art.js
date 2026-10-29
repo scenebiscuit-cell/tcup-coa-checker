@@ -313,13 +313,12 @@
       ...[[-16, 16], [-6, 24], [9, 21], [17, 12], [14, -10], [-18, 1], [4, -20]].map(([x, y]) =>
         [`M${x - 1.2} ${y - 1.2} h2.4 v2.4 h-2.4 Z`, "#ffffff", { opacity: .7 }]),
     ],
-    // vapes: a 510-thread cartridge, golden oil in a glass tank around the centre post
+    // vapes: a 510-thread cartridge, golden oil in a glass tank
     cart: [
       ["M-7 -48 H7 Q9 -48 9.5 -44 L11 -34 H-11 L-9.5 -44 Q-9 -48 -7 -48 Z", "#26282c"],
       ["M-13 -34 H13 V-29 H-13 Z", "#8a9098"],
       ["M-20 -25 Q-20 -29 -16 -29 H16 Q20 -29 20 -25 V22 Q20 26 16 26 H-16 Q-20 26 -20 22 Z", "#e6f2f2", { stroke: "#cfe0e0", width: 1 }],
       ["M-18 -17 H18 V21 Q18 24 15 24 H-15 Q-18 24 -18 21 Z", "#e5a53a"],
-      ["M-2.5 -29 H2.5 V26 H-2.5 Z", "#b7bec6", { opacity: .85 }],
       ["M-16 -25 V20", "none", { stroke: "#ffffff", width: 2.4, opacity: .55 }],
       ["M-20 26 H20 V33 H-20 Z", "#a7aeb6"],
       ["M-20 29.5 H20", "none", { stroke: "#8a9098", width: 1 }],
