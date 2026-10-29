@@ -66,4 +66,5 @@ npx serve .                    # or: python -m http.server 8000
 - Comments explain *why*, in plain English. Each regex that guesses at a lab format gets a comment with an example of the text it's for.
 - Interface text is plain and specific. Keep the footer credit "Created by Nick Lax".
 - Accessibility is required: WCAG 2.2 AA in light and dark themes, visible focus, keyboard-reachable tooltips, 24 px minimum tap targets, and no motion when the user prefers reduced motion. Use the color tokens in `styles.css`, not new hex values.
+- **Cache-busting:** `index.html` loads every script, stylesheet, and icon with `?v=<date>`. When you change any of those files, bump that date everywhere in `index.html` (for example `?v=2026-11-02`), so visitors' browsers fetch the new copy instead of a saved old one.
 - Commit messages: imperative, under 72 characters ("Read potency tables with LOQ columns").
