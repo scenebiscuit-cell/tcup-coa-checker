@@ -268,10 +268,19 @@
       else { mini.classList.remove("corner"); slot.insertBefore(mini, anchor); }
     };
     place(); phone.addEventListener?.("change", place);
-    // show it once less than 15% of the header art is on screen. Both thresholds are needed: with only 0.15,
-    // a slow scroll crosses it while the art is still partly visible and never reports leaving entirely.
-    if ("IntersectionObserver" in window)
-      new IntersectionObserver(([en]) => mini.classList.toggle("show", en.intersectionRatio < 0.15), { threshold: [0, 0.15] }).observe(root);
+    // show it once less than 15% of the header art is on screen. Measured on scroll (at most once a frame)
+    // rather than with IntersectionObserver, which some browsers and embedded views don't report reliably.
+    let ticking = false;
+    const check = () => {
+      ticking = false;
+      const b = root.getBoundingClientRect();
+      const seen = Math.max(0, Math.min(b.bottom, window.innerHeight) - Math.max(b.top, 0));
+      mini.classList.toggle("show", seen < b.height * 0.15);
+    };
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(check); } };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    check();
   }
   /* the small copy's bodies, drawn around the head's centre at the size of a 29-unit head.
      The eyes sit at about (±11.6, 2.9). Each part: [path, fill, { stroke, width, opacity }] */
