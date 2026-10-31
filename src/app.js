@@ -344,21 +344,14 @@
         setStatus("Reading the PDF…");
         const pdfjs = await loadPdf();
         const doc = await pdfjs.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
-        let text = "";
+        // each page's text pieces with their positions; CORE.pdfText rebuilds the lines (see core.js)
+        const pages = [];
         for (let i = 1; i <= Math.min(doc.numPages, 12); i++) {
-          const page = await doc.getPage(i);
-          const tc = await page.getTextContent();
-          // group pieces into lines by height on the page, then join them by their gaps (see CORE.joinLine)
-          let lastY = null, row = [];
-          for (const it of tc.items) {
-            if (!it.str) continue;
-            const y = Math.round(it.transform[5]);
-            if (lastY !== null && Math.abs(y - lastY) > 2) { text += CORE.joinLine(row) + "\n"; row = []; }
-            row.push({ str: it.str, x: it.transform[4], w: it.width, h: it.height || Math.abs(it.transform[3]) });
-            lastY = y;
-          }
-          text += CORE.joinLine(row) + "\n\n";
+          const tc = await (await doc.getPage(i)).getTextContent();
+          pages.push(tc.items.map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], w: it.width,
+            h: it.height || Math.abs(it.transform[3]), rot: Math.abs(it.transform[1]) > 0.01 || Math.abs(it.transform[2]) > 0.01 })));
         }
+        const text = CORE.pdfText(pages);
         state.fileName = f.name;
         if (text.replace(/\s/g, "").length > 150) {
           $("coa").value = text.trim(); state.sampleText = null;

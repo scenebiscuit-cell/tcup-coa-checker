@@ -1,0 +1,41 @@
+Official Compliance: Colorado Hemp
+CERTIFICATE OF ANALYSIS
+DATE ISSUED 10/20/2026
+SAMPLE NAME: Meadowlark Calm Chews 300 mg
+Infused, Colorado Infused
+SAMPLE DETAIL
+Batch Number: MC-2610-77
+Sample ID: 261018P004
+Unit Mass: 50 grams per Unit
+Serving Size: 5 grams per Serving
+CANNABINOID ANALYSIS - SUMMARY
+Total THC: 2.100 mg/unit
+Total CBD: 298.000 mg/unit
+
+Cannabinoid Analysis
+Tested by high-performance liquid
+chromatography with diode-array detection
+(HPLC-DAD).
+TOTAL THC: 2.100 mg/unit
+Total THC (∆9-THC+0.877*THCa)
+CANNABINOID TEST RESULTS - 10/19/2026
+COMPOUND
+LOD/LOQ
+(mg/g)
+MEASUREMENT
+UNCERTAINTY (mg/g)
+RESULT
+(mg/g)
+RESULT
+(%)
+CBD   0.004 / 0.011   ±0.2100   5.960   0.5960
+∆9-THC   0.002 / 0.014   ±0.0021   0.042   0.0042
+∆8-THC   0.01 / 0.02   N/A   ND   ND
+THCa   0.001 / 0.005   N/A   ND   ND
+CBG   0.002 / 0.006   N/A   0.110   0.0110
+SUM OF CANNABINOIDS   6.112 mg/g   0.6112%
+∆9-THC per Unit   2.100 mg/unit
+∆9-THC per Serving   0.210 mg/serving
+CBD per Unit   298.000 mg/unit
+Approved by: Example Analyst
+Riverbend Laboratories California LLC. | 1 Example Street, Santa Cruz, CA 95060 | example.com

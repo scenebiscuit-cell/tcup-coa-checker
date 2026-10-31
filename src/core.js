@@ -5,20 +5,20 @@ const CORE = (() => {
   const CANNABINOIDS = [
     // order matters: most specific first
     // labs write these as abbreviations (THCA, D9-THC) or chemical names (Tetrahydrocannabinolic acid);
-    // "?" covers PDFs whose Δ glyph extracts as a question mark
+    // "?" covers PDFs whose Δ glyph extracts as a question mark, and "^" labs that print "THC^9" for Δ9-THC
     ["thca",   /(tetrahydrocannabinolic|\bthc-?a\b|thc\s*acid)/i, "THCA"],
     ["thcva",  /\bthcv-?a\b|tetrahydrocannabivarinic/i, "THCVA"],
-    ["thcv",   /\bthcv\b|tetrahydrocannabivarin/i, "THCV"],
+    ["thcv",   /\bthc-?v\b|tetrahydrocannabivarin/i, "THCV"],
     ["hhco",   /\bhhc-?o\b/i, "HHC-O"],
     ["hhc",    /\bhhc\b|hexahydrocannabinol/i, "HHC"],
     ["thco",   /\bthc-?o\b|thc-?o-?acetate/i, "THC-O-acetate"],
     ["thcp",   /\bthc-?p\b|tetrahydrocannabiphorol/i, "THCP"],
     ["thcjd",  /\bthc-?jd\b/i, "THC-JD"],
     ["thch",   /\bthc-?h\b/i, "THC-H"],
-    ["d8",     /(δ|∆|\bd|delta|\?)\s*-?\s*8(?!\d)/i, "Δ8-THC"],
-    ["d10",    /(δ|∆|\bd|delta|\?)\s*-?\s*10(?!\d)/i, "Δ10-THC"],
+    ["d8",     /(δ|∆|\bd|delta|\?|\^)\s*-?\s*8(?!\d)/i, "Δ8-THC"],
+    ["d10",    /(δ|∆|\bd|delta|\?|\^)\s*-?\s*10(?!\d)/i, "Δ10-THC"],
     ["exo",    /exo-?thc/i, "exo-THC"],
-    ["d9",     /(δ|∆|\bd|delta|\?)\s*-?\s*9(?!\d)|^\s*thc\s*$|tetrahydrocannabinol/i, "Δ9-THC"],
+    ["d9",     /(δ|∆|\bd|delta|\?|\^)\s*-?\s*9(?!\d)|^\s*thc\s*$|tetrahydrocannabinol/i, "Δ9-THC"],
     ["cbdva",  /\bcbdv-?a\b|cannabidivarinic/i, "CBDVA"],
     ["cbdv",   /\bcbdv\b|cannabidivarin/i, "CBDV"],
     ["cbda",   /\bcbd-?a\b|cannabidiolic/i, "CBDA"],
@@ -122,6 +122,11 @@ const CORE = (() => {
     "|^(?:nd|n\\.d\\.|nt|n\\/t|n\\/a|na|bql|bdl|<?lo[qd]|absent|present|negative|positive|pass(?:ed)?|fail(?:ed)?|detected|tested|ok|—|-)$" +
     "|^(?:not detected|none detected|not tested|not present|not required|not analy[sz]ed|(?:absent|detected|present|not detected) in \\d+(?:\\.\\d+)? ?(?:g|ml|grams?))$", "i");
   const NOISE_NAME = /^(page|date|signature|license|lab director|this report|report|results? (?:are|relate)|sample size|ordered|completed)\b|:/i;
+  // a table cell that holds a value rather than a name: "ND", "0.08%", "0.004 / 0.011" (LOD/LOQ), "±0.19", "0.30 - 0.35"
+  const isValueCell = (c) => VALUE_TOKEN.test(c) || /^[<>]?\s*\d*\.?\d+\s*\/\s*\d*\.?\d+$/.test(c) || /^±/.test(c) ||
+    /^\d*\.?\d+\s*[-–]\s*\d*\.?\d+\s*%?$/.test(c) || /^n\s*\/\s*a$/i.test(c) || /^[<>]?\s*lo[qd]\s*[<>]?\s*lo[qd]?$/i.test(c);
+  // rows that restate a cannabinoid per serving or package ("CBD/SRV", "Δ9-THC per Unit", "Sum of Cannabinoids")
+  const PER_ROW = /\/\s*(srv|serv(?:ing)?|pkg|package|unit|piece|dose)\b|\bper\s+(unit|serving|package|pkg|piece|dose|container|gram|ml)\b|^sum of\b|^ratio\b/i;
   const isCannName = (c) => c.length < 48 && !/\d{3,}/.test(c) && /(thc|cbd|cbg|cbn|cbc|cbl|hhc|cannabi)/i.test(c);
   const statusOf = (s) => /fail/i.test(s) ? "fail" : /pass/i.test(s) ? "pass" : /n\/?t\b|n\/a|^not/i.test(s) ? "not tested" : "reported";
   // a section name on its own, so "Pesticides Pass" is a header but "Total Yeast and Mold Pass" is a result row
@@ -130,22 +135,25 @@ const CORE = (() => {
   const LABEL_NAMES = [
     "laborator(?:y|ies)", "lab name", "testing lab(?:oratory)?", "lab", "accreditation(?: #| no\\.?| number)?", "client", "customer", "licensee",
     "distributor", "manufacturer", "producer", "cultivator", "dispensing organization",
-    "product name", "sample name", "product", "sample", "sample id", "laboratory sample id", "product form", "dosage form", "product type",
+    "product name", "sample name", "strain(?: name)?", "order name", "retail batch ?#?", "product", "sample", "sample id", "laboratory sample id", "product form", "dosage form", "product type",
     "type", "form", "category", "sample type", "product category", "matrix", "sample matrix", "classification", "production method",
-    "batch(?: id| no\\.?| number| #)?", "lot(?: id| no\\.?| number| #)?", "harvest\\s*\\/\\s*lot id", "source package(?: id)?", "package id",
+    "batch(?: id)? or lot(?: number| no\\.?| id)?", "batch\\s*\\/\\s*lot(?: id| no\\.?| number)?", "batch(?: id| no\\.?| number| #)?", "lot(?: id| no\\.?| number| #)?", "harvest\\s*\\/\\s*lot id", "source package(?: id)?", "package id",
     "metrc(?: id| tag| package(?: id)?)?", "seed to sale ?#?",
     "(?:units?|servings?|pieces?|doses?) ?(?:per|\\/) ?(?:package|container|pkg|unit)", "servings", "units", "pieces", "count", "doses",
     "(?:number|#) of (?:servings|units|pieces|doses)", "unit count",
     "(?:retail )?(?:dosage unit size|unit size|unit weight|serving size|dose size|piece weight|serving weight|unit mass)",
     "net (?:wt\\.?|weight|contents?|volume|quantity)", "(?:retail )?(?:product|package|container) size", "total amount", "sample size(?: received)?",
     "date (?:collected|sampled|received|tested|reported|issued|completed|of analysis|analy[sz]ed|produced)",
-    "(?:collected|sampled|received|tested|reported|issued|completed)(?: on| date)?", "ordered", "test date", "report date", "analysis date",
+    "(?:collected|sampled|received|tested|reported|issued|completed)\\s*(?:on|date)?", "ordered", "test date", "report date", "analysis date",
     "analy[sz]ed(?: date)?", "license ?(?:#|no\\.?|number)?",
   ];
   const LABEL_AT = new RegExp(`\\s+(?=(?:${LABEL_NAMES.join("|")})\\s*#?\\s*:)`, "i");
   const LABEL_WHOLE = new RegExp(`^(?:${LABEL_NAMES.join("|")})$`, "i");
   const HEADER_FIRST = /^(analytes?|compounds?(?: name)?|names?|tests?(?: name)?|parameters?|cannabinoids?|components?|targets?|pesticides?|solvents?|metals?|elements?|organisms?|mycotoxins?|microbes?|contaminants?)$/i;
-  const RESULTISH = /result|amount|mass|conc|value|measured|found|level|limit|^%$|mg\/|[µμu]g\//i;
+  const RESULTISH = /result|amount|^amt\b|mass|conc|value|measured|found|level|limit|presence|^%$|mg\/|[µμu]g\//i;
+  // the column names a header can be read back from when its words are stacked on separate lines
+  // ("COMPOUND" / "LOD/LOQ" / "(mg/g)" / "MEASUREMENT" / "UNCERTAINTY (mg/g)" / "RESULT" / "(mg/g)")
+  const COL_PHRASE = /(?:lod\s*\/\s*loq|lo[dq]|measurement\s+uncertainty|uncertainty|mu(?:\s+range)?|(?:dry\s+weight\s+)?results?|amount|amt|mass|conc(?:entration)?|action\s+levels?|limits?|units?|status|pass\s*\/\s*fail|notes?|presence)(?:\s*\([^)]*\))?/gi;
 
   function sizeOf(s) {
     if (!s) return [null, null];
@@ -201,11 +209,24 @@ const CORE = (() => {
   // pieces that touch are one word, a normal gap is a space, a wide gap is a column break
   function joinLine(items) {
     let line = "", end = null, h = 0;
+    // letter-spaced text ("C E R T I F I C A T E"): some labs space every letter apart, and pdf.js reports each
+    // letter as its own piece. Measure the usual gap between letters and only count gaps wider than that.
+    const real = items.filter(it => String(it.str || "").trim());
+    let track = 0;
+    if (real.length >= 8 && real.filter(it => String(it.str).trim().length === 1).length >= real.length * 0.6) {
+      const gaps = [];
+      for (let k = 1; k < real.length; k++) {
+        const a = real[k - 1], b = real[k];
+        if (String(a.str).trim().length === 1 && String(b.str).trim().length === 1 && a.w != null) gaps.push(b.x - (a.x + a.w));
+      }
+      gaps.sort((a, b) => a - b);
+      if (gaps.length >= 5) track = Math.max(0, gaps[Math.floor(gaps.length * 0.3)]);
+    }
     for (const it of items) {
       const s = String(it.str || "");
       if (!s.trim()) continue;   // pdf.js fills gaps with space pieces; measure the real gap instead
       if (end !== null) {
-        const fs = Math.max(it.h || 0, h, 4), gap = (it.x ?? 0) - end;
+        const fs = Math.max(it.h || 0, h, 4), gap = (it.x ?? 0) - end - track;
         const sep = !isFinite(gap) || it.w == null ? "   " : gap > fs * 0.9 ? "   " : gap > fs * 0.12 ? " " : "";
         if (sep === "   ") line = line.trimEnd() + sep;
         else if (sep === " " && !line.endsWith(" ") && !s.startsWith(" ")) line += " ";
@@ -215,6 +236,62 @@ const CORE = (() => {
       h = it.h || h;
     }
     return line.trimEnd();
+  }
+
+  /* turning pdf.js text pieces ({ str, x, y, w, h, rot }) into lines. PDFs store text in drawing order, which is
+     usually reading order, but not always: some lab software draws a table's header after its rows, or one
+     column of the page after another. So there are two ways to rebuild the lines, and pdfText keeps the one
+     the parser reads more from. Rotated pieces (watermarks, sideways margin text) are left out of both. */
+
+  // letter-spaced text: some labs track every letter apart and pdf.js returns it as "S A M P L E I D : G P A".
+  // The word breaks are lost, so join the letters ("SAMPLEID:GPA"); values and numbers come through intact.
+  const unspace = (s) => {
+    const t = s.trim().split(/ /);
+    return !/ {2}/.test(s.trim()) && ((t.length >= 4 && t.filter(x => x.length === 1).length >= t.length * 0.7) || (t.length >= 2 && t.every(x => x.length === 1))) ? t.join("") : s;
+  };
+  const cleanItems = (items) => items.filter(it => String(it.str || "").trim() && !it.rot).map(it => ({ ...it, str: unspace(String(it.str)), h: it.h || 6 }));
+
+  // drawing order: a new line starts whenever the height on the page changes
+  function streamLines(items) {
+    const out = []; let row = [], base = null;
+    for (const it of cleanItems(items)) {
+      const last = row[row.length - 1];
+      const same = last && (Math.abs(it.y - last.y) <= 2 || (base && Math.abs(it.y - base.y) <= 2));
+      const sup = base && String(it.str).trim().length <= 3 && it.h < base.h * 0.85 && Math.abs(it.y - base.y) <= base.h * 0.6;
+      if (row.length && !same && !sup) { out.push(joinLine(row)); row = []; base = null; }
+      row.push(it);
+      if (!base || (!sup && it.h >= base.h * 0.85)) base = it;
+    }
+    if (row.length) out.push(joinLine(row));
+    return out;
+  }
+
+  // page order: sort top to bottom, group the pieces that share a baseline, and read each group left to right.
+  // Superscripts ("∆" "9" "-THC") sit a little higher than their line, so a short, smaller piece joins the
+  // line it sits beside.
+  function pdfLines(items) {
+    const its = cleanItems(items).sort((a, b) => b.y - a.y || a.x - b.x);
+    const rows = [];
+    for (const it of its) {
+      const r = rows[rows.length - 1];
+      const dy = r ? Math.abs(r.y - it.y) : Infinity;
+      const sup = r && String(it.str).trim().length <= 3 && it.h < r.h * 0.85 && dy <= r.h * 0.6;   // "9" in "∆9-THC", "**"
+      if (r && (dy <= Math.max(2, Math.min(r.h, it.h) * 0.6) || sup)) { r.items.push(it); r.h = Math.max(r.h, it.h); }
+      else rows.push({ y: it.y, h: it.h, items: [it] });
+    }
+    return rows.map(r => joinLine(r.items.sort((a, b) => a.x - b.x)));
+  }
+
+  // the text of a PDF, given each page's pieces: build it both ways and keep the one the parser reads more from
+  function readScore(d) {
+    const filled = [d.lab.name, d.product.name, d.product.form, d.product.batch, d.dates.tested || d.dates.reported, d.reported_totals.total_thc].filter(Boolean).length;
+    const cann = d.cannabinoids.filter(c => canonCannabinoid(c.name)), keys = new Set(cann.map(c => canonCannabinoid(c.name).key));
+    return keys.size * 2 + cann.filter(c => c.unit).length * 0.5 + d.panels.reduce((n, p) => n + 1 + Math.min(p.analytes.length, 20) / 4, 0) + filled * 3;
+  }
+  function pdfText(pages) {
+    const build = (fn) => pages.map(p => fn(p).join("\n")).join("\n\n");
+    const a = build(pdfLines), b = build(streamLines);
+    return readScore(parseText(b)) > readScore(parseText(a)) ? b : a;
   }
 
   /* the kind of concentrate, as the COA words it: "Live Rosin", "Shatter", "Live Resin Badder".
@@ -277,7 +354,8 @@ const CORE = (() => {
 
     /* "Label: value" fields. Lines are cut into segments at wide gaps and in front of known labels,
        and a label with nothing after it takes its value from the next line. */
-    const LABEL_START = /^[A-Za-z][^:]{0,39}:/;
+    // "Label:" or "Label#" ("Batch/Lot#  12182502", "Order# 1165")
+    const LABEL_START = /^[A-Za-z][^:#]{0,39}(?::|#(?=\s|$))/;
     // cut in front of a known label, but only once a "label:" has been seen ("Sample Size Received:" stays whole)
     const splitLabels = (p) => {
       if (!LABEL_START.test(p)) return [p];
@@ -292,7 +370,18 @@ const CORE = (() => {
       return out.map(x => x.trim()).filter(Boolean);
     };
     const segs = [];
+    // a row of bare labels over a row of values: "Batch ID or Lot Number:   Test:   Reported:" / "A   Potency   30Aug2024"
+    const gridValues = new Set();
     lines.forEach((l, i) => {
+      const labs = l.trim().split(/\t+|\s{2,}/).filter(Boolean);
+      if (labs.length < 2 || !labs.every(c => /^[A-Za-z][^:]{0,39}:$/.test(c))) return;
+      const vals = (lines[i + 1] || "").trim().split(/\t+|\s{2,}/).filter(Boolean);
+      if (vals.length !== labs.length || vals.some(c => LABEL_START.test(c))) return;
+      labs.forEach((lab, k) => segs.push(lab + " " + vals[k]));
+      gridValues.add(i).add(i + 1);
+    });
+    lines.forEach((l, i) => {
+      if (gridValues.has(i)) return;
       // a wide gap starts a new segment only when a new label follows it ("Batch:   A1" stays whole)
       const parts = [];
       l.trim().split(/\t+|\s*\|\s*|\s{2,}/).filter(Boolean).forEach(p => {
@@ -320,25 +409,58 @@ const CORE = (() => {
     out.lab.name = field(/^\s*(laboratory|lab name|testing lab(?:oratory)?|lab)\s*:\s*(.+)$/i);
     let labIdx = -1;
     if (!out.lab.name) {
-      labIdx = lines.findIndex(l => { const t = l.trim();
-        return t && t.length <= 60 && !t.includes(":") && /^[A-Z0-9]/.test(t) && !/[.,;]$/.test(t)
+      // a line (or one column of a line) that names a lab: "Kaycha Labs", "ACT Laboratories Florida"
+      const labLike = (t) => t && t.length <= 60 && !t.includes(":") && /^[A-Z0-9]/.test(t) && !/[.,;]$/.test(t)
           && /\b(labs?|laborator(y|ies)|analytical|analytics|testing)\b/i.test(t)
-          && !/director|manager|license|accredit|sample id|report|certificate|method|signature|tested|results/i.test(t); });
-      if (labIdx !== -1) out.lab.name = lines[labIdx].trim();
+          && !/director|manager|license|accredit|sample id|report|certificate|method|signature|tested|results|\d{3}\)/i.test(t);
+      // "Labs" and "Laboratories" are surer signs than "Testing" ("QA Testing" can be the kind of test)
+      const strong = (t) => labLike(t) && /\b(labs?|laborator(y|ies))\b/i.test(t);
+      labIdx = lines.findIndex(l => split(l).some(strong));
+      if (labIdx === -1) labIdx = lines.findIndex(l => split(l).some(labLike));
+      if (labIdx !== -1) out.lab.name = split(lines[labIdx]).find(strong) || split(lines[labIdx]).find(labLike);
+      // or in the fine print: "tested by ECL Testing, LLC", "SC Laboratories California LLC. | 100 Pioneer Street"
+      if (!out.lab.name) {
+        const org = "[A-Z][\\w&.' -]{1,40}?\\b(?:labs?|laborator(?:y|ies)|testing|analytics?)\\b(?:[ ,]+[A-Z][a-z]+)?(?:,?\\s+(?:LLC|Inc)\\.?)?";
+        for (const l of lines) {
+          const m = l.match(new RegExp(`(?:tested by|submitted to)\\s+(${org})`, "i")) || l.match(new RegExp(`^(${org})\\s*\\|`, "i"));
+          if (m) { out.lab.name = m[1].replace(/[.,]+$/, "").trim(); break; }
+        }
+      }
     } else labIdx = lines.findIndex(l => l.includes(out.lab.name));
     out.lab.accreditation = field(/^\s*(accreditation[^:]*)\s*:\s*(.+)$/i, /(iso\s*\/?\s*(?:iec\s*)?17025\b.*)$/i);
     out.client = field(/^\s*(client|customer|licensee|dispensing organization|distributor|manufacturer|producer|cultivator)\s*:\s*(.+)$/i);
 
     /* product */
-    out.product.name = field(/^\s*(product name|sample name|product)\s*:\s*(.+)$/i);
+    out.product.name = field(/^\s*(product name|sample name|product|strain(?: name)?|order name)\s*:\s*(.+)$/i);
+    // no label: look for the name where labs usually print it
+    const nameLike = (t) => t && t.length >= 3 && t.length <= 60 && /[a-z]{2}/i.test(t) && !/[:#]/.test(t) && !/^\d/.test(t)
+      && !/certificate|analysis|^page\b|\bof \d|prepared|summary|report|\b(llc|inc|corp|ltd|co)\.?$|\b(labs?|laboratory|testing)\b|https?:|www\.|@|\(\d{3}\)/i.test(t);
+    const first = (l) => (split(l || "")[0] || "");
+    // over a line that describes the product: "Bahama Mama Seltzer" / "Edible, Beverage, Hemp Cannabis"
+    const DESCRIPTOR = /^(?:[A-Z][\w-]*(?: [A-Z][\w-]*)?,\s*)+[A-Z][\w -]*$/;
+    const FORM_WORD = /flower|edible|beverage|concentrate|tincture|vape|plant|topical|infused|inhalable|pre-?roll|gumm|oil|cartridge|capsule|extract/i;
+    const di = lines.findIndex((l, k) => k > 0 && k < 40 && DESCRIPTOR.test(first(l)) && FORM_WORD.test(first(l)));
+    if (!out.product.name && di > 0 && nameLike(first(lines[di - 1]))) out.product.name = first(lines[di - 1]);
     if (!out.product.name && labIdx !== -1) {
       const nxt = (lines[labIdx + 1] || "").trim();
-      if (nxt && nxt.length <= 60 && !nxt.includes(":") && !/certificate|analysis/i.test(nxt)) out.product.name = nxt;
+      if (nxt && nxt.length <= 60 && !nxt.includes(":") && !/certificate|analysis|^\d+ of \d+$|^page\b/i.test(nxt) && /[a-z]{2}/i.test(nxt)) out.product.name = nxt;
+    }
+    // or just under the title: "CERTIFICATE OF ANALYSIS" / "Prepared for:" / "Apricot Scone"
+    if (!out.product.name) {
+      const t = lines.findIndex(l => /^certificate of analysis$/i.test(first(l)));
+      for (let k = t + 1; t !== -1 && k <= t + 6 && k < lines.length; k++) {
+        const c = first(lines[k]);
+        if (nameLike(c)) { out.product.name = c; break; }
+      }
     }
     if (!out.product.name) out.product.name = field(/^\s*(sample)\s*:\s*(.+)$/i);
     out.product.form = field(/^\s*(product form|dosage form)\s*:\s*(.+)$/i, /^\s*(product type|type|form)\s*:\s*(.+)$/i,
       /^\s*(category|sample type|product category)\s*:\s*(.+)$/i, /^\s*(matrix|sample matrix)\s*:\s*(.+)$/i);
-    out.product.batch = field(/^\s*(batch(?:\s*(?:id|no\.?|number|#))?)\s*[:#]\s*(.+)$/i,
+    // the describing line ("Flower, Fresh, Hemp Cannabis") says more than a vague matrix ("Plant", "Infused")
+    if (di > 0 && (!out.product.form || formClass(out.product.form) === "other")) out.product.form = first(lines[di]);
+    out.product.batch = field(/^\s*(retail batch\s*(?:id|no\.?|number|#)?)\s*[:#]\s*(.+)$/i,
+      /^\s*(batch(?:\s*id)?\s*(?:or|\/|&)\s*lot(?:\s*(?:id|no\.?|number))?|lot(?:\s*id)?\s*(?:or|\/|&)\s*batch(?:\s*(?:id|no\.?|number))?)\s*[:#]\s*(.+)$/i,
+      /^\s*(batch\s*(?:id|no\.?|number|#))\s*[:#]?\s*(.+)$/i, /^\s*(batch)\s*[:#]\s*(?!(?:failed|passed|fail|pass)\b)(.+)$/i,
       /^\s*(lot(?:\s*(?:id|no\.?|number|#))?)\s*[:#]\s*(.+)$/i, /^\s*(harvest\s*\/\s*lot\s*id)\s*:\s*(.+)$/i,
       /^\s*(source package(?: id)?|package id|metrc(?: id| tag| package(?: id)?)?)\s*:\s*(.+)$/i);
     out.product.units_per_package = num(field(
@@ -355,9 +477,11 @@ const CORE = (() => {
       /^\s*(net (?:wt\.?|weight|contents?|volume|quantity)|(?:retail\s+)?(?:product|package|container) size)\s*:\s*(.+)$/i));
 
     /* dates */
-    out.dates.collected = field(/^\s*(date (?:collected|sampled|received)|(?:collected|sampled|received)(?: on| date)?)\s*:\s*(.+)$/i);
-    out.dates.tested = field(/^\s*(date tested|test date|tested(?: on)?|date of analysis|analysis date|date analy[sz]ed|analy[sz]ed(?: date| on)?)\s*:\s*(.+)$/i);
-    out.dates.reported = field(/^\s*(date reported|report date|reported(?: on)?|date issued|issued(?: on)?|completed(?: on)?|date completed)\s*:\s*(.+)$/i);
+    out.dates.collected = field(/^\s*(date (?:collected|sampled|received)|date of (?:collection|sampling)|(?:collected|sampled|received)\s*(?:on|date)?)\s*:\s*(.+)$/i);
+    out.dates.tested = field(/^\s*(date tested|test date|tested(?: on)?|date of analysis|analysis date|date analy[sz]ed|analy[sz]ed(?: date| on)?)\s*:\s*(.+)$/i,
+      /(test results)\s*[-–—]\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/i);   // "CANNABINOID TEST RESULTS - 07/03/2026"
+    out.dates.reported = field(/^\s*(date reported|report date|reported(?: on)?|date issued|issued(?: on)?|completed?(?: on)?|date completed|report created|produced)\s*:\s*(.+)$/i,
+      /^\s*(date issued)\s+(\d{1,2}\/\d{1,2}\/\d{2,4})/i);   // "DATE ISSUED 07/05/2026"
 
     /* results */
     let current = null, colMap = null;
@@ -373,16 +497,29 @@ const CORE = (() => {
     // pick the potency cell to use from a row, given the table header: best unit first
     const potencyCell = (row) => {
       // units written beside values ("2.18 mg/g 9.81 mg/serving") would shift the columns, so drop them first
-      const cells = row.length > colMap.n ? row.filter((c, i) => i === 0 || !UNIT_ONLY.test(c)) : row;
+      let cells = row.length > colMap.n ? row.filter((c, i) => i === 0 || !UNIT_ONLY.test(c)) : row;
+      // still too many: a chart or legend printed beside the table ("CBDV  0.08%  0.00%  0.00 mg/g  CBD")
+      if (cells.length > colMap.n && cells.slice(1, colMap.n).every(isValueCell)) cells = cells.slice(0, colMap.n);
       const off = cells.length - colMap.n;
       const found = colMap.cands.map(c => ({ raw: cells[c.idx + off], unit: normUnit(c.unit) }))
         .filter(c => c.raw != null && /^(nd|n\.d\.|<|\d|\.)/i.test(c.raw));
       found.sort((a, b) => (POT_ORDER.indexOf(a.unit) + 1 || 99) - (POT_ORDER.indexOf(b.unit) + 1 || 99));
       const best = found[0];
-      if (best && !best.unit) best.unit = normUnit(cells.find(x => UNIT_LABEL.test(x)) || (/%$/.test(best.raw) ? "%" : "")) || null;
+      if (best && !best.unit) {
+        const own = String(best.raw).match(/(%|mg\/g|mg\/ml|mg\/unit|mg\/serving|mg\/pkg)\s*$/i);   // "11.05mg/g", "1.105%"
+        best.unit = normUnit(own ? own[1] : cells.find(x => UNIT_LABEL.test(x)) || "") || null;
+      }
       return best || null;
     };
     const TOTAL = /^(?:total\s*(?:potential\s*|active\s*|available\s*)?(?:(?:δ|∆|delta|d)\s*-?\s*9\s*-?\s*)?(thc|cbd)|max(?:imum)?\s*(thc|cbd)|(thc|cbd)\s*total)\b(.*)$/i;
+
+    // do this COA's totals print the value over the label? ("75.13%" / "Total THC" / "5.68%" / "Total CBD")
+    const valuesAbove = (() => {
+      const t = lines.findIndex(x => TOTAL.test(x.trim()) && !/\d/.test(x.replace(TOTAL, "$4").replace(/\d+-?thc|thc-?\d+|\d+\s*\(/gi, "")));
+      if (t < 1) return false;
+      const prev = lines[t - 1].trim(), before = (lines[t - 2] || "").trim();
+      return /^[<\d.]/.test(prev) && split(prev).length <= 2 && !TOTAL.test(before);
+    })();
 
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i].trim();
@@ -391,6 +528,24 @@ const CORE = (() => {
 
       // "Label Claim" style tables restate potency in other units; skip their rows
       if (/^label claim\b/i.test(l)) { current = null; colMap = null; continue; }
+
+      // a row of totals under (or over) a row of values: "75.13%   5.68%   91.34%" / "Total THC   Total CBD   Total Cannabinoids"
+      const tl = split(l);
+      if (tl.length >= 2 && tl.every(c => /^(total|ratio|sum)\b/i.test(c)) && tl.some(c => TOTAL.test(c))) {
+        const near = (d) => { let j = i + d; while (j >= 0 && j < lines.length && !lines[j].trim()) j += d; return j >= 0 && j < lines.length ? split(lines[j]) : []; };
+        const valsRow = (c) => c.length >= 2 && c.every(x => /^[<\d.]/.test(x) && isValueCell(x.replace(/\s+/, " ")));
+        const vals = valsRow(near(-1)) ? near(-1) : valsRow(near(1)) ? near(1) : null;
+        if (vals) {
+          tl.forEach((c, k) => {
+            const m = c.match(TOTAL);
+            if (!m || vals[k] == null) return;
+            const which = (m[1] || m[2] || m[3]).toLowerCase() === "thc" ? "total_thc" : "total_cbd";
+            const u = (vals[k].match(/(%|mg\/g|mg\/ml|mg\/unit|mg\/serving|mg\/pkg)\s*$/i) || [])[1];
+            setTotal(which, num(vals[k]), normUnit(u || ""));
+          });
+          continue;
+        }
+      }
 
       // reported totals: "Total THC  9.58  mg/mL", "Total THC" + "0.0581%", "Total Δ9-THC: 2.1 %", "Max THC 21.4%"
       const tm = l.match(TOTAL);
@@ -404,6 +559,9 @@ const CORE = (() => {
         }
         let rest = tail.replace(/^[\s/a-z()*.+×0-9]*?(?=[:\s]*[<\d.])/i, "").replace(/^[\s:]+/, "").trim();
         if (!/^[<\d.]/.test(rest)) rest = "";
+        // the value on its own line, under the label or (for labs that print values over labels) above it
+        const bare = (t) => /^[<\d.]/.test(t) && split(t).length <= 2;
+        if (!rest && valuesAbove && bare((lines[i - 1] || "").trim())) rest = lines[i - 1].trim();
         if (!rest && /^[<\d.]/.test((lines[i + 1] || "").trim())) { rest = lines[i + 1].trim(); i++; }
         const restCells = split(rest);
         const unitTxt = (rest.match(/(%|mg\/g|mg\/ml|mg)\b|%/i) || [])[0] || restCells[1] || "";
@@ -435,6 +593,11 @@ const CORE = (() => {
       let header = l.match(/^([A-Za-z][A-Za-z0-9 &/,()\-]+?)\s*(?:—|–|-{1,2}|:)\s*(pass|fail|not tested|passed|failed|n\/?t|tested|reported|complete)\s*$/i);
       if (!header) { const m = l.match(/^(.+?)\s+(passed|pass|failed|fail|not tested|n\/t)$/i); if (m && SECTION_NAME.test(m[1].trim())) header = m; }
       if (!header && SECTION_NAME.test(l)) header = [l, l, null];
+      // "CATEGORY 1 PESTICIDE TEST RESULTS - 02/24/2022   PASS", "MOISTURE TEST RESULT"
+      if (!header) {
+        const m = l.match(/^((?:category\s+\d\s+)?[A-Za-z][A-Za-z &/]*?\s+(?:test results?|testing|analysis))(?:\s*[-–—/]+\s*[\d/,a-z ]{6,14})?(?:\s+(pass|fail|passed|failed))?$/i);
+        if (m && categoryOf(m[1]) !== "other" && categoryOf(m[1]) !== "potency") header = [l, m[1], m[2] || null];
+      }
       if (!header && /^[A-Z0-9 &/,()\-]{6,}$/.test(l) && !/\d{2,}/.test(l)) header = [l, l, null];
       if (!header && /^(cannabinoids?|potency)\b/i.test(l) && cells.length === 1) header = [l, l, null];
       if (header && !/\s{2,}|\t|\|/.test(header[1]) && categoryOf(header[1].replace(/\(.*?\)/g, "")) !== "other") {
@@ -491,26 +654,52 @@ const CORE = (() => {
         }
       }
 
-      if (!current) continue;
-      if (cells.length < 2) continue;
-
-      // a table's own header row tells us its column order
-      if (HEADER_FIRST.test(cells[0]) && cells.slice(1).some(c => RESULTISH.test(c) || /^lo[dq]/i.test(c))) {
-        const m = { n: cells.length, cands: [], pot: current.category === "potency" };
-        cells.forEach((h, idx) => {
+      // a table's own header row tells us its column order. It can start after text from a neighbouring
+      // column of the page, wrap onto a second line, or be stacked one word per line; see readHeader.
+      const hdr = readHeader(i, cells);
+      if (hdr) {
+        // which section the table belongs to: its first column ("Cannabinoids"), a title just above it that the
+        // section reader didn't take ("HEAVYMETALTESTINGBYICP-MS//JUL03,2025"), or the first row under it ("CBD  0.08%")
+        let cat = categoryOf(hdr.cols[0]);
+        for (let j = i - 1; cat === "other" && j >= Math.max(0, i - 2); j--) {
+          const t = split(lines[j])[0] || "";
+          if (t && (!current || (t === t.toUpperCase() && /[A-Z]{4}/.test(t)))) cat = categoryOf(t);   // a title, not a sentence
+        }
+        if (cat === "other" && !current) {
+          let j = hdr.end + 1; while (j < lines.length && (!lines[j].trim() || cellsOf(lines[j]).every(c => isValueCell(c)))) j++;
+          const first = j < lines.length ? cellsOf(lines[j]).find(c => !isValueCell(c)) : null;
+          if (first && canonCannabinoid(first)) cat = "potency";
+        }
+        if (cat === "other" && !current) { i = hdr.end; continue; }
+        if (cat !== "other" && current?.category !== cat) current = cat === "potency" ? { category: "potency" } : panelFor(cat, CATEGORY_LABEL[cat], "reported");
+        const m = { n: hdr.cols.length, cands: [], pot: current.category === "potency", pair: hdr.pair };
+        hdr.cols.forEach((h, idx) => {
           if (idx === 0) return;
           const hu = unitIn(h);
-          if (/^lo[dq]\b|^lo[dq]$|\blo[dq]\b|uncert|^mu\b|dilution|^rpd|^ref/i.test(h)) return;
+          if (/^lo[dq]\b|^lo[dq]$|\blo[dq]\b|uncert|^mu\b|dilution|^rpd|^ref|^notes?$/i.test(h)) return;
           if (/limit|action|max|threshold|spec|allow/i.test(h)) { m.limit = idx; m.limitUnit = hu; }
           else if (/^units?$/i.test(h)) m.unit = idx;
           else if (/pass|fail|status|result\s*status/i.test(h) && !/^result\b(?!\s*status)/i.test(h)) m.status = idx;
           else if (RESULTISH.test(h) || hu) m.cands.push({ idx, unit: hu });
         });
-        // a units row under the header: "Analyte  LOQ  Mass  Mass" / "%  %  mg/g"
+        // a notes column at the end is usually empty in the rows, so don't count it
+        if (/^notes?$/i.test(hdr.cols[m.n - 1])) m.n--;
+        i = hdr.end;
+        // a units row under the header: "Analyte  LOQ  Mass  Mass" / "%  %  mg/g" (for side-by-side tables, both halves)
         let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
-        const ur = j < lines.length ? cellsOf(lines[j]) : [];
+        let ur = j < lines.length ? cellsOf(lines[j]) : [];
         if (ur.length && ur.every(c => UNIT_ONLY.test(c))) {
-          ur.forEach((u, k) => { const col = m.n - ur.length + k; const c = m.cands.find(x => x.idx === col); if (c) c.unit = u; else if (col === m.limit) m.limitUnit = u; });
+          if (m.pair && ur.length % 2 === 0) ur = ur.slice(0, ur.length / 2);
+          // units sit under the value columns, never under a pass/fail column
+          const valueCols = [...Array(m.n).keys()].filter(c => c > 0 && c !== m.status);
+          ur.forEach((u, k) => {
+            const col = valueCols[valueCols.length - ur.length + k];
+            const c = m.cands.find(x => x.idx === col);
+            if (c) c.unit = u;
+            else if (col === m.limit) m.limitUnit = u;
+            // a "Units" column with a unit printed under it holds the results ("Limit  Units  Status" / "CFU/g  CFU/g")
+            else if (col === m.unit) { m.cands.push({ idx: col, unit: u }); m.unit = undefined; }
+          });
           i = j;
         }
         m.result = m.cands[0]?.idx;
@@ -519,30 +708,62 @@ const CORE = (() => {
         continue;
       }
 
+      if (!current) continue;
+      if (cells.length < 2) continue;
+
+      // two tables printed side by side share each line: read the left one, then the right one
+      let parts = [cells];
+      if (colMap?.pair) {
+        const k = cells.findIndex((c, idx) => idx > 0 && !isValueCell(c) && /[a-z]/i.test(c));
+        if (k > 1) parts = [cells.slice(0, k), cells.slice(k)];
+      }
+      for (const row of parts) readRow(row);
+    }
+    return out;
+
+    // one table row, once the section and the column order are known
+    function readRow(row) {
+      let cells = row;
+      if (cells.length < 2) return;
       if (current.category === "potency") {
+        // text from a neighbouring column of the page can sit in front of the name ("(HPLC-DAD).  CBD  0.004 / 0.011 ...")
+        if (!isCannName(cells[0]) && colMap?.pot && cells.length > colMap.n) {
+          const f = cells.findIndex((c, idx) => idx > 0 && idx <= 2 && isCannName(c) && !isValueCell(c));
+          if (f > 0) cells = cells.slice(f);
+        }
         const name = cells[0];
-        if (/^total/i.test(name) || !isCannName(name) || NOISE_NAME.test(name)) continue;
+        if (/^total/i.test(name) || !isCannName(name) || NOISE_NAME.test(name) || PER_ROW.test(name)) return;
         if (colMap?.pot) {
           const c = potencyCell(cells);
           if (c) out.cannabinoids.push({ name, value: num(c.raw), raw: c.raw, unit: c.unit });
-          continue;
+          return;
         }
         const value = cells[1];
-        if (!/^(nd|n\.d\.|<|\d|\.)/i.test(value || "")) continue;
+        if (!/^(nd|n\.d\.|<|\d|\.)/i.test(value || "")) return;
         const unitTxt = cells.slice(2).find(x => UNIT_LABEL.test(x)) || (/%$/.test(value) ? "%" : "");
         out.cannabinoids.push({ name, value: num(value), raw: value, unit: normUnit(unitTxt) });
-        continue;
+        return;
       }
-      if (current.status === "not tested") continue;
-      if (NOISE_NAME.test(cells[0]) || cells[0].length > 70) continue;
+      if (current.status === "not tested") return;
+      if (NOISE_NAME.test(cells[0]) || cells[0].length > 70) return;
       let a;
       if (colMap) {
+        // a unit printed beside each value adds a cell: set it aside so the columns line up ("<1.5  <LOQ  mg/kg  Pass")
+        let sideUnit = null;
+        if (cells.length > colMap.n && colMap.unit == null) {
+          const u = cells.findIndex((c, idx) => idx > 0 && UNIT_ONLY.test(c) && !/^(mg|g|ml)$/i.test(c));
+          if (u > 0) { sideUnit = cells[u]; cells = cells.filter((c, idx) => idx !== u); }
+        }
         const full = cells.length === colMap.n;
-        const resultIdx = full ? colMap.result : (colMap.result === colMap.n - 1 ? cells.length - 1 : colMap.result);
+        let resultIdx = full ? colMap.result : (colMap.result === colMap.n - 1 ? cells.length - 1 : colMap.result);
+        // a short row usually lost an empty column near the front ("LEAD  0.017  0.0005/0.001  N/A" under
+        // "ANALYTE  LIMIT  AMT  LOD/LOQ  PASS/FAIL"): count from the right when that lands on a plain value
+        const fromRight = colMap.result + cells.length - colMap.n;
+        if (cells.length < colMap.n && fromRight >= 1 && VALUE_TOKEN.test(cells[fromRight] || "") && !VALUE_TOKEN.test(cells[resultIdx] || "")) resultIdx = fromRight;
         const st = cells.find((c, idx) => idx > 0 && /^(pass|fail)/i.test(c));
         a = { name: cells[0], result: cells[resultIdx] ?? null,
               limit: full && colMap.limit != null ? cells[colMap.limit] : null,
-              unit: (full && colMap.unit != null ? cells[colMap.unit] : cells.find(c => UNIT_ONLY.test(c) && !/^(mg|g|ml)$/i.test(c))) ?? colMap.resultUnit ?? colMap.limitUnit ?? null,
+              unit: (full && colMap.unit != null ? cells[colMap.unit] : sideUnit ?? cells.find(c => UNIT_ONLY.test(c) && !/^(mg|g|ml)$/i.test(c))) ?? colMap.resultUnit ?? colMap.limitUnit ?? null,
               status: st ? statusOf(st) : null };
       } else {
         // no header: name, then the result, then (if present) the limit; units and pass/fail can sit anywhere
@@ -550,14 +771,55 @@ const CORE = (() => {
         const st = rest.find(c => /^(pass|fail)/i.test(c));
         const unit = rest.find(c => UNIT_ONLY.test(c) && !/^(mg|g|ml)$/i.test(c));
         const vals = rest.filter(c => c !== st && c !== unit);
-        if (!vals.length) continue;
+        if (!vals.length) return;
         a = { name: cells[0], result: vals[0] ?? null, limit: vals[1] ?? null, unit: unit ?? null, status: st ? statusOf(st) : null };
       }
       for (const k of ["result", "limit", "unit"]) if (/^[—–-]$/.test(a[k] || "")) a[k] = null;
+      // not a result: footer and address lines that follow a table on the page ("404 N Whitt Street, Unit  2")
+      if (!a.status && (a.result == null || !isValueCell(String(a.result)))) return;
+      if (/^\d+\s+\w|\b(street|st\.|ave|avenue|blvd|suite|road|rd\.)\b|www\.|https?:|@|\d{3}[-.)]\s?\d{3}[-.]\d{4}|,\s*[A-Z]{2}$|,$/i.test(a.name)) return;
       if (a.status === "fail" && current.status !== "fail") current.status = "fail";
       current.analytes.push(a);
     }
-    return out;
+
+    /* a table header at line i: { cols, end, pair }, or null.
+         • "Analyte  LOQ (%)  Mass (%)  Mass (mg/g)": one line
+         • "Tested by ...  COMPOUND  LOD/LOQ  RESULT" / "(mg/g)  (mg/g)": text from another column of the
+           page in front, and the units wrapped onto the next line under each column
+         • "COMPOUND" / "LOD/LOQ" / "(mg/g)" / "RESULT" / "(%)": one word per line
+         • "Analyte  LOQ  Result  Analyte  LOQ  Result": two tables side by side (pair) */
+    function readHeader(i, cells) {
+      const k = cells.findIndex(c => HEADER_FIRST.test(c));
+      if (k === -1 || k > 2) return null;
+      let cols = cells.slice(k), end = i;
+      const colish = (c) => !isValueCell(c) && !/\d{2,}/.test(c.replace(/\([^)]*\)/g, ""));
+      if (cols.length === 1) {
+        // stacked: collect the words on the following lines until the first row of values
+        const words = []; let j = i + 1;
+        while (j < lines.length && j <= i + 12) {
+          const c = cellsOf(lines[j]);
+          if (c.length && !c.every(colish)) break;
+          words.push(...c); j++;
+        }
+        const found = words.join(" ").match(COL_PHRASE) || [];
+        if (found.length < 2) return null;
+        cols = [cols[0], ...found.map(x => x.trim())]; end = j - 1;
+      } else {
+        // the header's units or second words wrapped onto the next line, one under each column
+        let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
+        const nx = j < lines.length ? cellsOf(lines[j]) : [];
+        if (nx.length && nx.length === cols.length - 1 && nx.every(colish) && !nx.every(c => UNIT_ONLY.test(c))
+            && nx.some(c => /^\(|uncertainty|level|result|range/i.test(c))) {
+          cols = [cols[0], ...cols.slice(1).map((c, idx) => (/^\(/.test(nx[idx]) ? c + " " + nx[idx] : c + " " + nx[idx]))];
+          end = j;
+        }
+      }
+      if (!cols.slice(1).some(c => RESULTISH.test(c) || /^lo[dq]/i.test(c))) return null;
+      // two tables side by side: the first column's name comes back
+      const again = cols.findIndex((c, idx) => idx > 0 && HEADER_FIRST.test(c) && c.toLowerCase() === cols[0].toLowerCase());
+      if (again > 1) return { cols: cols.slice(0, again), end, pair: true };
+      return { cols, end, pair: false };
+    }
   }
 
   /* ---------- the AI extraction prompt ---------- */
@@ -865,6 +1127,6 @@ ${coaText}
     return { checks, counts, verdict, math, formClass: fc };
   }
 
-  return { parseText, joinLine, extractionPrompt, extractionSchema, sanitizeExtraction, evaluate, thcMath, canonCannabinoid, formClass, num, fmt, CATEGORY_LABEL, THC_WEIGHT };
+  return { parseText, joinLine, pdfLines, streamLines, pdfText, extractionPrompt, extractionSchema, sanitizeExtraction, evaluate, thcMath, canonCannabinoid, formClass, num, fmt, CATEGORY_LABEL, THC_WEIGHT };
 })();
 if (typeof module !== "undefined") module.exports = CORE;

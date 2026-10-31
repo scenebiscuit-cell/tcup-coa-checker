@@ -102,3 +102,84 @@ test("joinLine: touching pieces form a word, small gaps a space, wide gaps a col
   ]);
   assert.equal(line, "Total THC 0.95   %");
 });
+
+/* A potency-only plant report: field labels in a row with their values in the row under them, the product
+   name alone under the title, a potency table with no section title above it (LOD, LOQ, an uncertainty
+   range, and an empty Notes column), and the lab named only in the fine print. */
+test("layout: label grid, untitled potency table, lab in the fine print", () => {
+  const d = fixture("grid-labels-dry-weight.txt");
+  assert.equal(d.product.name, "Marigold Haze");
+  assert.equal(d.product.batch, "MH-0412");                      // "Batch ID or Lot Number:" over "MH-0412"
+  assert.equal(d.product.form, "Plant");
+  assert.equal(d.dates.reported, "14Oct2026");
+  assert.equal(d.lab.name, "Bluebird Laboratories, Inc");
+  assert.deepEqual([can(d, "thca").value, can(d, "thca").unit], [18.42, "%"]);   // not the LOQ or the range
+  assert.deepEqual([can(d, "d9").value, can(d, "cbga").value], [0.31, 0.987]);
+  assert.deepEqual(d.reported_totals.total_thc, { value: 16.464, unit: "%" });
+});
+
+/* A hemp beverage report: totals printed over their labels, a pie-chart legend beside the potency rows,
+   "THC^9" for Δ9-THC, "Batch/Lot#" with no colon, an unlabeled name over a line that describes the product,
+   a microbial table whose "Units" column holds the results, and the lab's address after each table. */
+test("layout: chart beside the table, totals over labels, results in a Units column", () => {
+  const d = fixture("chart-beside-table.txt");
+  assert.equal(d.product.name, "Prickly Pear Fizz");
+  assert.equal(d.product.form, "Edible, Beverage, Hemp Cannabis");
+  assert.equal(d.product.batch, "PPF-0926");
+  assert.equal(d.lab.name, "Lone Star Example Testing, LLC");
+  assert.deepEqual(d.reported_totals.total_thc, { value: 4.8, unit: "mg/unit" });
+  assert.deepEqual([can(d, "d9").value, can(d, "d9").unit], [0.02, "mg/g"]);   // the chart's "0%" isn't read
+  assert.ok(can(d, "thcv") && can(d, "d8"), "THC-V and THC^8 are recognized");
+  assert.equal(can(d, "thcv").value, 0);                         // not the legend's "100%"
+  assert.deepEqual([analyte(d, "microbials", "E. Coli").result, analyte(d, "microbials", "E. Coli").limit], ["ND", "1"]);
+  assert.equal(analyte(d, "microbials", "Yeast & Mold").unit, "CFU/g");
+  assert.ok(!panel(d, "microbials").analytes.some((a) => /street|TX|555/.test(a.name)), "the address isn't a result");
+});
+
+/* A two-column page read in drawing order: the potency header stacked one word per line, LOD/LOQ as one
+   "0.004 / 0.011" cell, a ± uncertainty column, per-unit and per-serving rows after the table, and dates
+   written without a colon ("DATE ISSUED 10/20/2026", "TEST RESULTS - 10/19/2026"). */
+test("layout: header stacked one word per line", () => {
+  const d = fixture("stacked-header.txt");
+  assert.equal(d.product.name, "Meadowlark Calm Chews 300 mg");
+  assert.equal(d.product.batch, "MC-2610-77");
+  assert.deepEqual([d.dates.tested, d.dates.reported], ["10/19/2026", "10/20/2026"]);
+  assert.deepEqual([can(d, "cbd").value, can(d, "cbd").unit], [5.96, "mg/g"]);   // RESULT (mg/g), not LOD/LOQ or ±
+  assert.deepEqual([can(d, "d9").value, can(d, "cbg").value], [0.042, 0.11]);
+  assert.equal(d.cannabinoids.length, 5, "per-unit and per-serving rows aren't extra cannabinoids");
+  assert.deepEqual(d.reported_totals.total_thc, { value: 2.1, unit: "mg/unit" });
+  assert.equal(d.lab.name, "Riverbend Laboratories California LLC");
+});
+
+/* Two potency tables side by side on each line, with a units row for both, and totals printed over
+   their labels one per line. */
+test("layout: two tables side by side", () => {
+  const d = fixture("side-by-side-tables.txt");
+  assert.equal(d.product.name, "Mango Haze");                    // "Strain:"
+  assert.deepEqual([can(d, "thca").value, can(d, "thca").unit], [875.7, "mg/unit"]);   // from the right-hand table
+  assert.deepEqual([can(d, "cbga").value, can(d, "d9").value], [11, 13]);
+  assert.equal(d.cannabinoids.length, 9);
+  assert.deepEqual(d.reported_totals.total_thc, { value: 78.1, unit: "%" });   // 78.10% over "Total THC"
+  assert.deepEqual(d.reported_totals.total_cbd, { value: 0.42, unit: "%" });
+});
+
+/* Rebuilding lines from PDF text pieces (pdf.js items) */
+const piece = (str, x, y, h = 8, w = str.length * h * 0.5) => ({ str, x, y, h, w });
+test("pdf lines: reading order, superscripts, letter spacing, and choosing a reading", () => {
+  // a header drawn after its rows still reads above them
+  const page = [piece("CBD", 10, 500), piece("5.1", 120, 500), piece("Analyte", 10, 520), piece("Result (mg/g)", 120, 520)];
+  assert.deepEqual(CORE.pdfLines(page), ["Analyte   Result (mg/g)", "CBD   5.1"]);
+  // the 9 in "∆9-THC" sits higher and smaller, but stays on its line
+  assert.equal(CORE.pdfLines([piece("∆", 10, 400), piece("9", 14.5, 402.5, 5, 2.5), piece("-THC", 17, 400)])[0], "∆9-THC");
+  // a large title beside smaller lines doesn't swallow them
+  const big = [piece("Certificate of Analysis", 10, 708, 30), piece("Lot ID: 33", 400, 717), piece("Batch#: A-1", 400, 706)];
+  assert.deepEqual(CORE.pdfLines(big), ["Lot ID: 33", "Certificate of Analysis   Batch#: A-1"]);
+  // letter-spaced text comes back as words without the spaces between letters
+  assert.equal(CORE.pdfLines([piece("T H C A", 10, 300), piece("1 9 . 3 8 %", 120, 300)])[0], "THCA   19.38%");
+  // rotated text (a watermark) is left out
+  assert.deepEqual(CORE.pdfLines([{ ...piece("DRAFT", 10, 300), rot: true }, piece("CBD", 10, 200)]), ["CBD"]);
+  // pdfText keeps whichever reading the parser gets more from
+  const header = [piece("Analyte", 10, 520), piece("Result (%)", 120, 520)];
+  const rows = [piece("THCA", 10, 500), piece("19.38", 120, 500), piece("CBD", 10, 480), piece("0.40", 120, 480)];
+  assert.match(CORE.pdfText([[...rows, ...header]]), /^Analyte   Result \(%\)\nTHCA   19\.38/);
+});

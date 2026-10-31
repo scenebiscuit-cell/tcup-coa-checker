@@ -1,0 +1,27 @@
+Harbor Example Labs
+1 Example Pl
+Miami, FL 33100
+Sample ID: 2610HEL0042.0001
+Strain: Mango Haze
+Matrix: Concentrates & Extracts
+Type: Badder
+Unit Weight: 1 g
+Completed: 10/14/2026
+Batch#: MH-1026
+Summary
+Test   Date Tested   Result
+Cannabinoids   10/14/2026   Complete
+78.10%
+Total THC
+0.42%
+Total CBD
+88.30%
+Total Cannabinoids
+Analyte   LOQ   Result   Result   Analyte   LOQ   Result   Result
+%   %   mg/unit   %   %   mg/unit
+CBDa   0.01   ND   ND   CBN   0.01   0.21   2.1
+CBD   0.01   0.42   4.2   Δ9-THC   0.01   1.30   13.0
+CBGa   0.01   1.10   11.0   Δ8-THC   0.01   ND   ND
+CBG   0.01   0.31   3.1   THCa   0.01   87.57   875.7
+THCV   0.01   ND   ND   Total   89.61   896.1
+Laboratory Manager
