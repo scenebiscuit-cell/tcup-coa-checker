@@ -1,0 +1,27 @@
+CERTIFICATE OF ANALYSIS
+Prepared for:
+Marigold Haze   Juniper Ridge Farms LLC
+Batch ID or Lot Number:   Test:   Reported:   USDA License:
+MH-0412   Dry Weight Potency   14Oct2026   NA
+Matrix:   Test ID:   Started:   Sampler ID:
+Plant   T000912345   12Oct2026   NA
+Method(s):   Received:   Status:
+TM10 (HPLC-DAD) \ TM20 (Karl   11Oct2026   NA
+Fischer)
+Dry Weight
+Cannabinoids   LOD (%)   LOQ (%)   Result (%)   MU Range (%)   Notes
+Cannabichromene (CBC)   0.022   0.064   ND   ND   Dried Sample Moisture
+Cannabidiol (CBD)   0.070   0.174   0.215   0.199 - 0.231   Content = 71.20%
+Cannabidiolic Acid (CBDA)   0.072   0.178   0.512   0.474 - 0.550   Measurement
+Uncertainty = 7.50%
+Cannabigerol (CBG)   0.012   0.036   0.140   0.129 - 0.151
+Cannabigerolic Acid (CBGA)   0.052   0.152   0.987   0.913 - 1.061
+Delta 8-Tetrahydrocannabinol (Delta 8-THC)   0.062   0.181   ND   ND
+Delta 9-Tetrahydrocannabinol (Delta 9-THC)   0.056   0.165   0.310   0.287 - 0.333
+Delta 9-Tetrahydrocannabinolic Acid (THCA-A)   0.050   0.146   18.420   17.040 - 19.800
+Tetrahydrocannabivarin (THCV)   0.011   0.033   ND   ND
+Total Cannabinoids   20.584   19.040 - 22.128
+Total Potential THC   16.464   15.230 - 17.698
+Final Approval
+Testing results are based solely upon the sample submitted to Bluebird Laboratories, Inc., in the condition it was received.
+Bluebird Laboratories, Inc. | 1 Example Way, Denver, CO 80000 | www.example.com

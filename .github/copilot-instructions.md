@@ -32,15 +32,20 @@ The owner knows HTML and CSS well and is still learning JavaScript. Explain Java
 
 ## How the parser works (`parseText` in `src/core.js`)
 
-Labs don't share a COA layout and no state standardizes one, so the parser looks for patterns that recur across labs. In order:
+Labs don't share a COA layout and no state standardizes one, so the parser looks for patterns that recur across labs.
+
+**PDF text first.** A PDF stores text in drawing order, which isn't always reading order. `pdfText` (in the shared block) rebuilds each page two ways, by position (`pdfLines`: top to bottom, left to right) and in drawing order (`streamLines`), and keeps whichever one `parseText` reads more from (`readScore`). Both join superscripts back into names ("∆" "9" "-THC"), drop rotated watermark text, and undo letter-spaced text ("T H C A" becomes "THCA"; the spaces between words are lost in that case). `app.js` only collects the pdf.js pieces and calls `CORE.pdfText`.
+
+Then, in order:
 
 1. **CSV exports** (`fromCsv`) become tab-separated rows. A "Section, Analyte, Result, ..." export becomes a header line per section.
-2. **Fields** like `Batch: A1` are found with `field()` over *segments*: lines split at wide gaps and in front of known labels (`LABEL_NAMES`), with a bare `Label:` taking its value from the next line. To support a new field label, add it to `LABEL_NAMES` and to the matching `field(...)` pattern.
+2. **Fields** like `Batch: A1` are found with `field()` over *segments*: lines split at wide gaps and in front of known labels (`LABEL_NAMES`), with a bare `Label:` taking its value from the next line, and a row of bare labels taking its values from the row under it. With no labeled name, the product name is read from the line over a describing line ("Edible, Beverage, Hemp Cannabis") or just under the title. The lab can come from the fine print ("tested by ..."). To support a new field label, add it to `LABEL_NAMES` and to the matching `field(...)` pattern.
 3. **Table rows** are split by `cellsOf()`: tabs, pipes, or 2+ spaces separate cells. With single spaces only, value-like tokens (`VALUE_TOKEN`) are read off the end of the line and the rest is the name.
 4. **Sections** start at a header (`SECTION_NAME`, all-caps lines, `Name — PASS`), a status on the next line (`STATUS_LINE`), a one-line summary with several "Section Status" pairs, or a summary grid (a row of names over a row of statuses).
-5. **Table headers** (`HEADER_FIRST`) set the column order. LOD, LOQ, dilution, and uncertainty columns are skipped. Units can come from the header (`Result (ppm)`) or from a units row underneath.
+5. **Table headers** (`readHeader`) set the column order. A header can start after text from another column of the page, wrap its units onto the next line, be stacked one word per line (read back with `COL_PHRASE`), have no section title above it (the section comes from its first column, a title just above, or its first row), or hold two tables side by side (`pair`). LOD, LOQ, dilution, uncertainty, and trailing notes columns are skipped. Units can come from the header (`Result (ppm)`), a units row underneath, or the value itself (`11.05mg/g`). Extra cells after a row (a chart legend) and footer lines after a table (an address) are left out.
 6. **Potency** comes from sideways tables (names in a row, unit rows under them) or row tables. When several unit columns exist, the parser prefers mg/unit, then mg/package, mg/mL, mg/g, and %.
-7. **Cannabinoid names**, both abbreviations and chemical names, map to keys in `CANNABINOIDS`. Order matters: acids before their neutral forms.
+7. **Cannabinoid names**, both abbreviations and chemical names, map to keys in `CANNABINOIDS`. Order matters: acids before their neutral forms. Rows that restate a value per serving or package (`PER_ROW`) aren't extra cannabinoids.
+8. **Totals** can sit beside, under, or over their label ("75.13%" over "Total THC"), including a row of values over a row of labels.
 
 The self-checks in `evaluate` (`read` check) catch misreads: impossible values, and THC rows that don't add up to the lab's printed total.
 

@@ -1,0 +1,46 @@
+Certificate of Analysis
+Sunbelt Provisions, LLC   Order# 2201
+100 Example Road, Waco, TX 76700   Sample# 7788
+Sample Received: 9/15/2026
+Prickly Pear Fizz   Report Created: 9/22/2026
+Edible, Beverage, Hemp Cannabis   Batch/Lot# PPF-0926
+Summary
+Test   Date Tested   Result
+Potency   9/20/2026   Tested
+Microbiological (Quantitative)   9/21/2026   Tested
+Cannabinoids (XYZ-LC-100)
+This test method has been validated and performed according to the principles and measurements of ISO 17025:2017.
+4.80 mg/unit   0.00 mg/unit
+Total THC   Total CBD   Ratio of Cannabinoids
+Analyte   LOQ (%)   Mass (%)   Mass (mg/g)
+CBDV   0.08%   0.00%   0.00 mg/g   CBD
+CBD   0.08%   0.00%   0.00 mg/g   0%
+THC^9
+THC-V   0.08%   0.00%   0.00 mg/g
+100%
+THC^8   0.08%   0.00%   0.00 mg/g
+THC^9   0.08%   0.00%   0.02 mg/g
+CBG   0.08%   0.00%   0.00 mg/g   CBDV   CBD   THCV
+THCA   0.08%   0.00%   0.00 mg/g   THC^8   THC^9   CBG
+Total   0.00%   0.02 mg/g
+Unit Weight/Vol. (mL) =   355
+Total THC = THCa * 0.877 + ^9-THC   Total CBD = CBDa * 0.877 + CBD
+This product has been tested by Lone Star Example Testing, LLC using valid testing methodologies.
+500 Example Street, Unit 3
+Tyler, TX 75700
+555-555-0100   Jordan Example
+www.example.com   President
+
+Order# 2201
+Batch/Lot# PPF-0926
+Microbials (Subcontracted)
+Analyte   Limit   Units   Status
+CFU/g   CFU/g
+E. Coli   1   ND   Pass
+Salmonella SPP   1   ND   Pass
+Yeast & Mold   1,000   < 1,000   Pass
+Analyte   Presence   Status
+Listeria   ND   Pass
+500 Example Street, Unit 3
+Tyler, TX 75700
+555-555-0100   Jordan Example
