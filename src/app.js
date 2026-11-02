@@ -496,6 +496,23 @@
     $("copy").onclick = copyFindings;
   }
 
+  // The two cards in the header follow the product type once the visitor picks a sample or uploads a COA.
+  // The numbers stay in index.html (the HB 46 limits); only flower and vapes change them:
+  // flower can't be dispensed, and an inhaled dose is set by the prescription.
+  const CARDS_HTML = $("limits").innerHTML, NOTE_TEXT = $("limitsFor").textContent;
+  const TYPE_PLURAL = { smokable: "flower and pre-rolls", inhalation: "vapes", concentrate: "concentrates", edible: "edibles",
+    tincture: "tinctures", capsule: "capsules and tablets", ode: "orally dissolving products", topical: "topicals",
+    suppository: "suppositories", other: "other products" };
+  function renderCards(fc) {
+    const card = (big, small, src) => `<div class="limit"><b>${big}</b><span>${small}</span><small>${src}</small></div>`;
+    $("limits").innerHTML = CARDS_HTML;
+    if (fc === "smokable")
+      $("limits").innerHTML = card("Not allowed", "THC per serving (can't be dispensed)", "Occ. Code §169.001") + card("Not allowed", "THC per package (can't be dispensed)", "Occ. Code §169.001");
+    else if (fc === "inhalation")
+      $("limits").firstElementChild.outerHTML = card("Prescribed", "THC per serving (set by the prescription)", "Occ. Code §169.006");
+    $("limitsFor").textContent = fc ? `Showing ${TYPE_PLURAL[fc]} (this COA's product type).` : NOTE_TEXT;
+  }
+
   function renderResults() {
     const d = state.data;
     const r = CORE.evaluate(d);
@@ -508,6 +525,7 @@
     // loaded on arrival leaves them with a neutral face
     if (state.chosen && ($("verdict").dataset.v !== r.verdict || !state.reacted)) { window.HeaderArt?.mood(r.verdict); state.reacted = true; }
     if (state.chosen) window.HeaderArt?.body?.(CORE.formClass(p.form));   // the small scrolling copy takes the product's shape
+    renderCards(state.chosen ? r.formClass : null);
     $("verdict").dataset.v = r.verdict;
     $("verdict").innerHTML = `<div class="stamp">${head[0]}</div><div class="vtext"><h3>${esc(p.name || "Unnamed product")}</h3><p>${head[1]}</p><div class="counts">${pills}</div></div>`;
 
