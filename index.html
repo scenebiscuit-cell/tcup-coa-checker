@@ -9,14 +9,14 @@
 <meta property="og:title" content="TCUP COA Checker">
 <meta property="og:description" content="Checks a lab COA against Texas Compassionate Use Program rules, with a citation for every finding.">
 <meta property="og:image" content="docs/screenshot-desktop.png">
-<link rel="icon" href="favicon.svg?v=2026-11-02b" type="image/svg+xml">
-<link rel="icon" href="favicon-32.png?v=2026-11-02b" type="image/png" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026-11-02b">
+<link rel="icon" href="favicon.svg?v=2026-11-02c" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png?v=2026-11-02c" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026-11-02c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Michroma&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="src/styles.css?v=2026-11-02b">
-<link rel="stylesheet" href="src/retro.css?v=2026-11-02b">
+<link rel="stylesheet" href="src/styles.css?v=2026-11-02c">
+<link rel="stylesheet" href="src/retro.css?v=2026-11-02c">
 </head>
 <body>
 
@@ -27,7 +27,7 @@
       <h1>TCUP COA Checker</h1>
       <p>Paste or upload a certificate of analysis. The checker pulls out potency and contaminant results and tests them against <b>Texas medical cannabis rules</b>, with the citation for every finding.</p>
       <div class="limits" aria-label="Limits applied">
-        <div class="limit"><b>10 mg</b><span>THC per dosage unit</span><small>HB 46 · 2025</small></div>
+        <div class="limit"><b>10 mg</b><span>THC per serving (dosage unit)</span><small>HB 46 · 2025</small></div>
         <div class="limit"><b>1 g</b><span>THC per package or device</span><small>HB 46 · 2025</small></div>
       </div>
     </div>
@@ -112,6 +112,7 @@
         <span>Or drop a PDF or text file, or</span>
         <button type="button" class="linkbtn" id="pick">choose a file</button>
         <span id="attached"></span>
+        <p class="drop-note">Photos and scanned PDFs need an AI model to read them: open <b>Use a local AI model</b> below.</p>
       </div>
       <form class="fetch" id="fetchForm" hidden>
         <label class="lbl" for="url">Or fetch from a COA link</label>
@@ -192,9 +193,9 @@
   </footer>
 </main>
 
-<script src="src/header-art.js?v=2026-11-02b"></script>
-<script src="src/core.js?v=2026-11-02b"></script>
-<script src="src/samples.js?v=2026-11-02b"></script>
-<script src="src/app.js?v=2026-11-02b"></script>
+<script src="src/header-art.js?v=2026-11-02c"></script>
+<script src="src/core.js?v=2026-11-02c"></script>
+<script src="src/samples.js?v=2026-11-02c"></script>
+<script src="src/app.js?v=2026-11-02c"></script>
 </body>
 </html>
