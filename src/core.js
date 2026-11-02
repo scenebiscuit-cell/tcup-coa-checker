@@ -415,9 +415,11 @@ const CORE = (() => {
           && !/director|manager|license|accredit|sample id|report|certificate|method|signature|tested|results|\d{3}\)/i.test(t);
       // "Labs" and "Laboratories" are surer signs than "Testing" ("QA Testing" can be the kind of test)
       const strong = (t) => labLike(t) && /\b(labs?|laborator(y|ies))\b/i.test(t);
-      labIdx = lines.findIndex(l => split(l).some(strong));
-      if (labIdx === -1) labIdx = lines.findIndex(l => split(l).some(labLike));
-      if (labIdx !== -1) out.lab.name = split(lines[labIdx]).find(strong) || split(lines[labIdx]).find(labLike);
+      // the pieces of a line, without a closing period ("SC Laboratories California LLC. | 100 Pioneer Street")
+      const pieces = (l) => split(l).map(x => x.replace(/(\b(?:llc|inc|ltd|corp))\.$/i, "$1"));
+      labIdx = lines.findIndex(l => pieces(l).some(strong));
+      if (labIdx === -1) labIdx = lines.findIndex(l => pieces(l).some(labLike));
+      if (labIdx !== -1) out.lab.name = pieces(lines[labIdx]).find(strong) || pieces(lines[labIdx]).find(labLike);
       // or in the fine print: "tested by ECL Testing, LLC", "SC Laboratories California LLC. | 100 Pioneer Street"
       if (!out.lab.name) {
         const org = "[A-Z][\\w&.' -]{1,40}?\\b(?:labs?|laborator(?:y|ies)|testing|analytics?)\\b(?:[ ,]+[A-Z][a-z]+)?(?:,?\\s+(?:LLC|Inc)\\.?)?";
@@ -481,6 +483,13 @@ const CORE = (() => {
       const [a, b] = sp.split("/");
       if (!out.product.unit_size) [out.product.unit_size, out.product.unit_size_unit] = sizeOf(a);
       if (!out.product.net_content) [out.product.net_content, out.product.net_content_unit] = sizeOf(b);
+    }
+    // "Unit Mass: 150 grams per Unit" and "Serving Size: 5 grams per Serving": the serving is the dose, and the
+    // unit is the whole product
+    const [sv, svU] = sizeOf(field(/^\s*(?:retail\s+)?(serving size|serving weight|dose size)\s*:\s*(.+)$/i));
+    if (sv && svU === out.product.unit_size_unit && out.product.unit_size > sv) {
+      if (!out.product.net_content) [out.product.net_content, out.product.net_content_unit] = [out.product.unit_size, out.product.unit_size_unit];
+      out.product.unit_size = sv;
     }
 
     /* dates */
@@ -717,6 +726,10 @@ const CORE = (() => {
       }
 
       if (!current) continue;
+      if (cells.length === 1 && current.category !== "potency" && colMap) {
+        const w = wrappedRow(i);
+        if (w) { readRow(w.cells); i = w.end; continue; }
+      }
       if (cells.length < 2) continue;
 
       // two tables printed side by side share each line: read the left one, then the right one
@@ -728,6 +741,22 @@ const CORE = (() => {
       for (const row of parts) readRow(row);
     }
     return out;
+
+    /* an analyte name that wraps: "SHIGA TOXIN PRODUCING" / "ESCHERICHIA COLI STEC" / "Not Present   PASS".
+       Returns the lines' combined cells when line i starts such a row, or null. */
+    function wrappedRow(i) {
+      const name = [];
+      let j = i;
+      while (j < lines.length && j < i + 3) {
+        const c = cellsOf(lines[j]);
+        if (c.length !== 1 || isValueCell(c[0]) || STATUS_LINE.test(c[0]) || c[0].length > 50 || /:/.test(c[0])) break;
+        name.push(c[0]); j++;
+      }
+      if (!name.length || j >= lines.length) return null;
+      const rest = cellsOf(lines[j]);
+      if (rest.length < 2 || !isValueCell(rest[0]) || !rest.some(c => /^(pass|fail)/i.test(c))) return null;
+      return { cells: [name.join(" "), ...rest], end: j };
+    }
 
     // one table row, once the section and the column order are known
     function readRow(row) {
@@ -743,7 +772,13 @@ const CORE = (() => {
         if (/^total/i.test(name) || !isCannName(name) || NOISE_NAME.test(name) || PER_ROW.test(name)) return;
         if (colMap?.pot) {
           const c = potencyCell(cells);
-          if (c) out.cannabinoids.push({ name, value: num(c.raw), raw: c.raw, unit: c.unit });
+          if (c) {
+            const row = { name, value: num(c.raw), raw: c.raw, unit: c.unit };
+            // keep the per-weight value too when the per-unit one is preferred: the dry-weight (%) rules need it
+            const w = familyOf(c.unit) !== "mass" && (c.all.find(x => x.unit === "mg/g") || c.all.find(x => x.unit === "%"));
+            if (w) row.mass = { value: num(w.raw), raw: w.raw, unit: w.unit };
+            out.cannabinoids.push(row);
+          }
           // a table with both mg/unit and mg/package columns tells us how many units the package holds
           // ("70.476  70.476" is 1 unit; "10.0  100.0" is 10)
           const per = (u) => num(c?.all?.find(x => x.unit === u)?.raw);
@@ -762,6 +797,8 @@ const CORE = (() => {
       }
       if (current.status === "not tested") return;
       if (NOISE_NAME.test(cells[0]) || cells[0].length > 70) return;
+      // the product name repeated in each page's header ("KAPPUCCINO | DATE ISSUED ...")
+      if (out.product.name && cells[0].toLowerCase() === out.product.name.toLowerCase()) return;
       let a;
       if (colMap) {
         // a unit printed beside each value adds a cell: set it aside so the columns line up ("<1.5  <LOQ  mg/kg  Pass")
@@ -790,10 +827,12 @@ const CORE = (() => {
         if (!vals.length) return;
         a = { name: cells[0], result: vals[0] ?? null, limit: vals[1] ?? null, unit: unit ?? null, status: st ? statusOf(st) : null };
       }
+      // a short row with no cell where the header's result column is ("SALMONELLA SPECIES   Not Present   PASS")
+      if (a.result == null && colMap) a.result = cells.slice(1).find(c => isValueCell(c) && !/^(pass|fail)/i.test(c)) ?? null;
       for (const k of ["result", "limit", "unit"]) if (/^[—–-]$/.test(a[k] || "")) a[k] = null;
       // not a result: footer and address lines that follow a table on the page ("404 N Whitt Street, Unit  2")
       if (!a.status && (a.result == null || !isValueCell(String(a.result)))) return;
-      if (/^\d+\s+\w|\b(street|st\.|ave|avenue|blvd|suite|road|rd\.)\b|www\.|https?:|@|\d{3}[-.)]\s?\d{3}[-.]\d{4}|,\s*[A-Z]{2}$|,$/i.test(a.name)) return;
+      if (/^\d+\s+\w|\b(street|st\.|ave|avenue|blvd|suite|road|rd\.)\b|www\.|https?:|@|\d{3}[-.)]\s?\d{3}[-.]\d{4}|,\s*[A-Z]{2}$|,$|^[\d,.\s]+$/i.test(a.name)) return;
       if (a.status === "fail" && current.status !== "fail") current.status = "fail";
       current.analytes.push(a);
     }
@@ -828,6 +867,21 @@ const CORE = (() => {
             && nx.some(c => /^\(|uncertainty|level|result|range/i.test(c))) {
           cols = [cols[0], ...cols.slice(1).map((c, idx) => (/^\(/.test(nx[idx]) ? c + " " + nx[idx] : c + " " + nx[idx]))];
           end = j;
+        }
+      }
+      // the last column names wrap onto the next lines, one word each: "... Result   Pass /" / "Fail" / "Action" / "Level"
+      if (cols.length > 1 && end === i) {
+        const words = []; let j = i + 1;
+        while (j < lines.length && j <= i + 4) {
+          const t = lines[j].trim();
+          if (!/^[A-Za-z/()%]{2,14}$/.test(t) || !/^(fail|pass|status|action|level|limits?|units?|result|\(.*\))$/i.test(t)) break;
+          words.push(t); j++;
+        }
+        if (words.length) {
+          if (/\/$/.test(cols[cols.length - 1])) cols[cols.length - 1] += " " + words.shift();
+          const more = words.join(" ").match(COL_PHRASE) || [];
+          cols = cols.concat(more.map(x => x.trim()));
+          end = j - 1;
         }
       }
       if (!cols.slice(1).some(c => RESULTISH.test(c) || /^lo[dq]/i.test(c))) return null;

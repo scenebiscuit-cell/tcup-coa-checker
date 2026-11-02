@@ -309,7 +309,7 @@
   drop.addEventListener("dragleave", () => drop.classList.remove("over"));
   drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); const f = e.dataTransfer?.files?.[0]; if (f) handleFile(f); });
 
-  function clearAttachment() { state.images = []; state.fileName = null; state.fromScreen = false; $("attached").innerHTML = ""; }
+  function clearAttachment() { state.images = []; state.fileName = null; state.scanFail = null; state.fromScreen = false; $("attached").innerHTML = ""; }
   function showAttachment(label) {
     $("attached").innerHTML = `<span class="chip">${esc(label)} <button type="button" aria-label="Remove attachment">×</button></span>`;
     $("attached").querySelector("button").onclick = () => { clearAttachment(); setStatus(""); };
@@ -333,7 +333,7 @@
     const type = f.type || "";
     try {
       if (/^image\//.test(type)) {
-        if (!imageReader()) { setStatus("Reading photos needs a vision model. Connect a local vision model such as qwen2.5vl under \"Use a local AI model,\" or paste the COA text instead.", true); return; }
+        if (!imageReader()) { $("coa").value = ""; state.sampleText = null; setStatus("Reading photos needs a vision model. Connect a local vision model such as qwen2.5vl under \"Use a local AI model,\" or paste the COA text instead.", true); return; }
         state.images = [f]; state.fileName = f.name;
         $("coa").value = ""; state.sampleText = null;
         showAttachment(f.name);
@@ -359,7 +359,8 @@
           setStatus(`Pulled text from ${doc.numPages} page${doc.numPages > 1 ? "s" : ""}. Check it below, then run the check.`);
         } else {
           // scanned PDF: render pages to images for Claude
-          if (!imageReader()) { setStatus("This PDF is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model such as qwen2.5vl, or paste the COA text instead.", true); return; }
+          // clear the old text first, so checking can't run on the previous COA or sample by mistake
+          if (!imageReader()) { $("coa").value = ""; state.sampleText = null; state.scanFail = f.name; clearReport(`${f.name} couldn't be read, so there's no report yet.`); setStatus("This PDF is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model such as qwen2.5vl, or paste the COA text instead.", true); return; }
           const lim = imageReader() === "claude" ? await state.sample.limits().catch(() => null) : null;
           const max = Math.min(doc.numPages, lim?.images?.maxCount || 3);
           const blobs = [];
@@ -392,7 +393,10 @@
     const text = $("coa").value.trim();
     // unchanged sample text reloads instantly, unless a local model is on: then the model reads it too, for comparison
     if (state.sampleId && text === state.sampleText.trim() && !useOllama()) { loadSample(state.sampleId); return; }
-    if (!text && !state.images.length) { setStatus("Paste COA text or attach a file first.", true); return; }
+    if (!text && !state.images.length) {
+      setStatus(state.scanFail ? `${state.scanFail} is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model, or paste the COA text instead.` : "Paste COA text or attach a file first.", true);
+      return;
+    }
     if (useOllama()) runOllama(text); else if (state.sample) runClaude(text); else runLocal();
   };
   $("stop").onclick = () => state.ctl?.abort();
@@ -441,6 +445,12 @@
   }
 
   /* ---------- render ---------- */
+  // back to the empty report, so an earlier COA's verdict isn't left showing beside an error
+  function clearReport(msg) {
+    state.data = null; state.result = null;
+    $("source").textContent = "—";
+    $("reportBody").innerHTML = `<div class="empty">${esc(msg)}</div>`;
+  }
   function showData(d, source) {
     state.data = d; state.source = source;
     $("source").textContent = source;
