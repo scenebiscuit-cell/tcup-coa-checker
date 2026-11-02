@@ -475,6 +475,13 @@ const CORE = (() => {
       out.product.concentrate_type = concentrateType(out.product.form, out.product.name, ctype);
     [out.product.net_content, out.product.net_content_unit] = sizeOf(field(
       /^\s*(net (?:wt\.?|weight|contents?|volume|quantity)|(?:retail\s+)?(?:product|package|container) size)\s*:\s*(.+)$/i));
+    // both in one field: "SERVING/PACKAGE SIZE: 1 G / 1 G"
+    const sp = field(/^\s*(serving\s*\/\s*package\s*size)\s*:\s*(.+)$/i);
+    if (sp && sp.includes("/")) {
+      const [a, b] = sp.split("/");
+      if (!out.product.unit_size) [out.product.unit_size, out.product.unit_size_unit] = sizeOf(a);
+      if (!out.product.net_content) [out.product.net_content, out.product.net_content_unit] = sizeOf(b);
+    }
 
     /* dates */
     out.dates.collected = field(/^\s*(date (?:collected|sampled|received)|date of (?:collection|sampling)|(?:collected|sampled|received)\s*(?:on|date)?)\s*:\s*(.+)$/i);
@@ -505,6 +512,7 @@ const CORE = (() => {
         .filter(c => c.raw != null && /^(nd|n\.d\.|<|\d|\.)/i.test(c.raw));
       found.sort((a, b) => (POT_ORDER.indexOf(a.unit) + 1 || 99) - (POT_ORDER.indexOf(b.unit) + 1 || 99));
       const best = found[0];
+      if (best) best.all = found;
       if (best && !best.unit) {
         const own = String(best.raw).match(/(%|mg\/g|mg\/ml|mg\/unit|mg\/serving|mg\/pkg)\s*$/i);   // "11.05mg/g", "1.105%"
         best.unit = normUnit(own ? own[1] : cells.find(x => UNIT_LABEL.test(x)) || "") || null;
@@ -736,6 +744,14 @@ const CORE = (() => {
         if (colMap?.pot) {
           const c = potencyCell(cells);
           if (c) out.cannabinoids.push({ name, value: num(c.raw), raw: c.raw, unit: c.unit });
+          // a table with both mg/unit and mg/package columns tells us how many units the package holds
+          // ("70.476  70.476" is 1 unit; "10.0  100.0" is 10)
+          const per = (u) => num(c?.all?.find(x => x.unit === u)?.raw);
+          const pu = per("mg/unit"), pp = per("mg/pkg");
+          if (!out.product.units_per_package && pu > 0 && pp > 0) {
+            const n = Math.round(pp / pu);
+            if (n >= 1 && Math.abs(pp / pu - n) <= n * 0.02) out.product.units_per_package = n;
+          }
           return;
         }
         const value = cells[1];
