@@ -9,14 +9,14 @@
 <meta property="og:title" content="TCUP COA Checker">
 <meta property="og:description" content="Checks a lab COA against Texas Compassionate Use Program rules, with a citation for every finding.">
 <meta property="og:image" content="docs/screenshot-desktop.png">
-<link rel="icon" href="favicon.svg?v=2026-11-02c" type="image/svg+xml">
-<link rel="icon" href="favicon-32.png?v=2026-11-02c" type="image/png" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026-11-02c">
+<link rel="icon" href="favicon.svg?v=2026-11-02d" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png?v=2026-11-02d" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026-11-02d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Michroma&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="src/styles.css?v=2026-11-02c">
-<link rel="stylesheet" href="src/retro.css?v=2026-11-02c">
+<link rel="stylesheet" href="src/styles.css?v=2026-11-02d">
+<link rel="stylesheet" href="src/retro.css?v=2026-11-02d">
 </head>
 <body>
 
@@ -26,10 +26,11 @@
       <div class="eyebrow">Texas Compassionate Use Program · Lab COA review</div>
       <h1>TCUP COA Checker</h1>
       <p>Paste or upload a certificate of analysis. The checker pulls out potency and contaminant results and tests them against <b>Texas medical cannabis rules</b>, with the citation for every finding.</p>
-      <div class="limits" aria-label="Limits applied">
+      <div class="limits" id="limits" aria-label="Limits applied">
         <div class="limit"><b>10 mg</b><span>THC per serving (dosage unit)</span><small>HB 46 · 2025</small></div>
         <div class="limit"><b>1 g</b><span>THC per package or device</span><small>HB 46 · 2025</small></div>
       </div>
+      <p class="limits-for" id="limitsFor" aria-live="polite">The same limits apply to every product type TCUP allows. Flower can't be dispensed, and an inhaled dose is set by the prescription.</p>
     </div>
     <div class="band-art" id="crew" data-mood="idle" data-hat="always">
     <svg class="crew" viewBox="80 0 268 264" aria-hidden="true" focusable="false">
@@ -193,9 +194,9 @@
   </footer>
 </main>
 
-<script src="src/header-art.js?v=2026-11-02c"></script>
-<script src="src/core.js?v=2026-11-02c"></script>
-<script src="src/samples.js?v=2026-11-02c"></script>
-<script src="src/app.js?v=2026-11-02c"></script>
+<script src="src/header-art.js?v=2026-11-02d"></script>
+<script src="src/core.js?v=2026-11-02d"></script>
+<script src="src/samples.js?v=2026-11-02d"></script>
+<script src="src/app.js?v=2026-11-02d"></script>
 </body>
 </html>
