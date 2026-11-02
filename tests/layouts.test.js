@@ -198,3 +198,14 @@ test("layout: package size from mg/unit and mg/package columns, or one serving/p
   const one = CORE.parseText("SAMPLE: Example Flower\nSERVING/PACKAGE SIZE: 1 G / 3.5 G\nBatch #: EF-1\n");
   assert.deepEqual([one.product.unit_size, one.product.unit_size_unit, one.product.net_content, one.product.net_content_unit], [1, "g", 3.5, "g"]);
 });
+
+/* A microbial table whose last column names wrap one word per line ("Pass /" / "Fail" / "Action" / "Level"),
+   an organism name that wraps before its result, "Not Present" results, and analyst IDs under the table. */
+test("layout: wrapped column names and organism names, Not Present results", () => {
+  const d = fixture("wrapped-micro-table.txt");
+  const stec = analyte(d, "microbials", "SHIGA TOXIN PRODUCING ESCHERICHIA COLI STEC");
+  assert.ok(stec, "the wrapped organism name is one row");
+  assert.deepEqual([stec.result, stec.status], ["Not Present", "pass"]);
+  assert.equal(analyte(d, "microbials", "TOTAL YEAST AND MOLD").limit, "10000");   // the Action Level column
+  assert.ok(!panel(d, "microbials").analytes.some((a) => /^\d/.test(a.name)), "analyst IDs aren't a result");
+});

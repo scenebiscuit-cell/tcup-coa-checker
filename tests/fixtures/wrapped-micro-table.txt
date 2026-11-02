@@ -1,0 +1,23 @@
+Example Valley Labs
+Sample : EVL-2611-002
+Product Name: Example Drops 600 mg
+Type: Tincture
+Batch# : EX-HEMP-77
+Completed : 11/01/26
+Microbial   PASSED
+Analyte   LOD   Units   Result   Pass /
+Fail
+Action
+Level
+TOTAL YEAST AND MOLD   100   cfu/g   ND   PASS   10000
+SHIGA TOXIN PRODUCING
+ESCHERICHIA COLI STEC
+Not Present   PASS
+SALMONELLA SPECIES   Not Present   PASS
+ASPERGILLUS FLAVUS   Not Present   PASS
+ASPERGILLUS FUMIGATUS   Not Present   PASS
+ASPERGILLUS NIGER   Not Present   PASS
+ASPERGILLUS TERREUS   Not Present   PASS
+TOTAL COLIFORM   10   cfu/g   ND   PASS   100
+Analyzed by:   Weight:   Extraction date:
+1473, 3215, 2, 2080   0.52g   10/30/26
