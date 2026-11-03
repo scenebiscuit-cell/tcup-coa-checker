@@ -229,6 +229,23 @@ tr.bad td { color: var(--fail); font-weight: 700; }
 .thcmark { color: var(--accent); font-family: var(--f-mono); }
 
 .foot-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- Ask about this result ---------- */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }   /* read by screen readers, not shown */
+.ask { border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; background: var(--sheet); }
+.ask-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.ask-head h3 { font-size: 17px; font-weight: 700; margin: 0; }
+.askrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.askrow input { flex: 1 1 200px; min-width: 0; background: var(--tint); color: var(--ink); border: 1px solid var(--rule); border-radius: var(--r); padding: 9px 12px; min-height: 40px; font: inherit; }
+.askrow input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.askrow input:disabled { opacity: .6; }
+.ask-out { font-size: 14px; display: grid; gap: 6px; }
+.ask-note { margin: 0; color: var(--muted); font-size: 13px; }
+.ask-q { margin: 0; font-weight: 700; }
+.ask-a { margin: 0; white-space: pre-wrap; }
+.suggest { border: 1px solid var(--rule); background: var(--tint); color: var(--ink); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer; min-height: 28px; margin: 2px 2px 0 0; }
+.suggest:hover { border-color: var(--accent); }
+.suggest:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .empty { padding: 40px 20px; text-align: center; color: var(--muted); }
 
 /* notes */

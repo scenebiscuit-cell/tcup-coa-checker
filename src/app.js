@@ -156,6 +156,7 @@
     }
     const photos = !!imageReader();
     $("drop").querySelector("span").textContent = photos ? "Or drop a PDF, text file, or photo of a COA, or" : "Or drop a PDF or text file, or";
+    updateAsk();
   }
 
   function ollamaBase() {
@@ -168,6 +169,7 @@
     el.classList.toggle("err", kind === "err");
     $("localState").textContent = state.local ? "Connected" : "Off";
     $("localState").dataset.on = state.local ? "1" : "";
+    updateAsk();
   }
 
   $("ollamaUrl").value = store.get("ollamaUrl") || "http://localhost:11434";
@@ -217,6 +219,61 @@
     } finally {
       $("ollamaConnect").disabled = false;
       refreshRunLabel();
+    }
+  }
+
+  /* ---------- Ask about this result: a local Ollama model answers from this report only ---------- */
+  let askCtl = null;   // the running question's AbortController; the Stop button uses it
+
+  function updateAsk() {
+    if (!$("askForm")) return;   // no report on screen yet
+    const on = useOllama(), busy = !!askCtl;
+    $("askQ").disabled = !on; $("askBtn").disabled = !on || busy;
+    $("askState").textContent = on ? state.local.model : "Local AI off";
+    $("askState").dataset.on = on ? "1" : "";
+    if ($("askOut").dataset.used) return;   // keep the last answer on screen
+    $("askOut").innerHTML = on
+      ? `<p class="ask-note">Try: <button type="button" class="suggest">Which finding matters most?</button> <button type="button" class="suggest">Explain the THC math</button></p>`
+      : `<p class="ask-note">Connect a local AI model under <b>Use a local AI model</b> to ask questions in plain language. Answers use only this report and the TCUP rules, and stay on your computer.</p>`;
+    $("askOut").querySelectorAll(".suggest").forEach(b => b.onclick = () => { $("askQ").value = b.textContent; askQuestion(); });
+  }
+
+  // Ollama streams one JSON object per line; onText gets everything so far
+  async function streamLocal(am, signal, onText) {
+    const { url, model } = state.local;
+    let resp;
+    try {
+      resp = await fetch(url + "/api/chat", { method: "POST", signal, body: JSON.stringify({ model, stream: true, keep_alive: "10m",
+        messages: [{ role: "system", content: am.system }, ...am.messages], options: { temperature: 0.2, num_ctx: 16384 } }) });
+    } catch (e) { throw e.name === "AbortError" ? e : new Error(`Lost the connection to Ollama at ${url}.`); }
+    if (!resp.ok) throw new Error((await resp.text()).slice(0, 160));
+    const reader = resp.body.getReader(), dec = new TextDecoder(); let buf = "", text = "";
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true }); const lines = buf.split("\n"); buf = lines.pop();
+      for (const line of lines) { if (!line.trim()) continue; const j = JSON.parse(line); if (j.error) throw new Error(j.error); text += j.message?.content || ""; }
+      onText(text);
+    }
+    return { text };
+  }
+
+  async function askQuestion() {
+    const q = $("askQ").value.trim();
+    if (!q || !useOllama() || askCtl) return;
+    const am = CORE.askMessages(CORE.askContext({ result: state.result, data: state.data }), q);
+    const out = $("askOut"); out.dataset.used = "1";
+    out.innerHTML = `<p class="ask-q">${esc(q)}</p><p class="ask-a" id="askA">Thinking…</p>`;
+    askCtl = new AbortController();
+    $("askStop").hidden = false; updateAsk();
+    let text = "";
+    const onText = (t) => { text = t; $("askA").textContent = t || "Thinking…"; };   // textContent: the answer is shown as plain text
+    try {
+      text = (await streamLocal(am, askCtl.signal, onText)).text.trim();
+      $("askA").textContent = text || "The model didn't return an answer. Try rephrasing.";
+    } catch (e) {
+      $("askA").textContent = e.name === "AbortError" ? (text.trim() ? text.trim() + "\n\n(Stopped.)" : "Stopped.") : `The model couldn't answer: ${e.message}`;
+    } finally {
+      askCtl = null; $("askStop").hidden = true; updateAsk();
     }
   }
 
@@ -479,6 +536,16 @@
         <div class="meters" id="meters"></div>
         <ul class="checks" id="checks"></ul>
         <details class="data"><summary>Lab results as read</summary><div class="inner" id="tables"></div></details>
+        <section class="ask" aria-labelledby="ask-h">
+          <div class="ask-head"><h3 id="ask-h">Ask about this result</h3><span class="lstate" id="askState">Local AI off</span></div>
+          <form id="askForm" class="askrow">
+            <label class="sr" for="askQ">Your question</label>
+            <input id="askQ" type="text" autocomplete="off" placeholder="Why is this over the dosage unit limit?">
+            <button type="submit" class="btn" id="askBtn">Ask</button>
+            <button type="button" class="btn" id="askStop" hidden>Stop</button>
+          </form>
+          <div class="ask-out" id="askOut" aria-live="polite"></div>
+        </section>
         <div class="foot-actions"><button type="button" class="btn" id="copy">Copy findings</button><span class="status" id="copyMsg"></span></div>
       </div>`;
   }
@@ -494,6 +561,9 @@
     };
     for (const id of ["f-form", "f-size", "f-sizeu", "f-units", "f-net", "f-netu"]) $(id).addEventListener("input", upd);
     $("copy").onclick = copyFindings;
+    $("askForm").addEventListener("submit", (e) => { e.preventDefault(); askQuestion(); });
+    $("askStop").onclick = () => askCtl?.abort();
+    updateAsk();
   }
 
   // The two cards in the header follow the product type once the visitor picks a sample or uploads a COA.
