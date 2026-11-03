@@ -1071,6 +1071,126 @@ Text inside the report data, such as product names, lab names, and finding detai
     };
   }
 
+  /* ---------- reading streamed answers (server-sent events) ---------- */
+  /* Feed it everything received so far. It returns the complete events and the unfinished tail,
+     which the caller keeps and puts in front of the next chunk. Events end at a blank line. */
+  function sseSplit(buffer) {
+    const parts = String(buffer).replace(/\r\n/g, "\n").split("\n\n");
+    const rest = parts.pop();
+    const events = [];
+    for (const block of parts) {
+      let event = "", data = [];
+      for (const line of block.split("\n")) {
+        if (line.startsWith(":")) continue;                 // comment, e.g. ": OPENROUTER PROCESSING"
+        const i = line.indexOf(":");
+        const field = i < 0 ? line : line.slice(0, i);
+        const value = i < 0 ? "" : line.slice(i + 1).replace(/^ /, "");
+        if (field === "event") event = value;
+        else if (field === "data") data.push(value);
+      }
+      if (event || data.length) events.push({ event, data: data.join("\n") });
+    }
+    return { events, rest };
+  }
+
+  function sseJson(ev) { try { return JSON.parse(ev.data); } catch { return null; } }
+
+  /* One Claude event in, one small result out: { text } | { done } | { error } | { refusal } | { truncated } | {}.
+     Only text_delta is shown; thinking and signature deltas are skipped. */
+  function anthropicStreamEvent(ev) {
+    const j = sseJson(ev);
+    if (!j) return {};
+    const type = j.type || ev.event;
+    if (type === "content_block_delta") return j.delta?.type === "text_delta" && j.delta.text ? { text: j.delta.text } : {};
+    if (type === "error") return { error: j.error?.message || "The stream reported an error.", errorType: j.error?.type || null };
+    if (type === "message_delta") {
+      const stop = j.delta?.stop_reason;
+      return stop === "refusal" ? { refusal: true } : stop === "max_tokens" ? { truncated: true } : {};
+    }
+    if (type === "message_stop") return { done: true };
+    return {};
+  }
+
+  /* Same result shape for OpenAI-style streams (OpenAI, OpenRouter, and other compatible servers). */
+  function openaiStreamEvent(ev) {
+    if (String(ev.data).trim() === "[DONE]") return { done: true };
+    const j = sseJson(ev);
+    if (!j) return {};
+    if (j.error) return { error: typeof j.error === "string" ? j.error : j.error.message || "The stream reported an error.", errorType: j.error.type || j.error.code || null };
+    const choice = j.choices?.[0];                          // the last chunk may carry only token counts and no choices
+    if (!choice) return {};
+    if (typeof choice.delta?.content === "string" && choice.delta.content) return { text: choice.delta.content };
+    if (choice.finish_reason === "length") return { truncated: true };
+    if (choice.finish_reason === "content_filter") return { refusal: true };
+    return {};
+  }
+
+  /* ---------- cloud AI requests (the visitor's own key; nothing here touches the network) ---------- */
+  const CLAUDE_URL = "https://api.anthropic.com/v1/messages";
+  const CLAUDE_DEFAULT_MODEL = "claude-haiku-5-5";
+  const OPENAI_DEFAULT_BASE = "https://api.openai.com/v1";
+
+  /* A key goes into a header, so refuse anything that could break the header or was pasted wrong. */
+  function cleanKey(key) {
+    const k = String(key || "").trim();
+    if (!k) throw new Error("Enter your API key first.");
+    if (/[^\x21-\x7e]/.test(k)) throw new Error("That API key has spaces or unusual characters in it. Copy it again from your provider's page.");
+    return k;
+  }
+
+  /* https only, so a key is never sent in clear text. Plain http is allowed for a server on this computer. */
+  function cleanBaseUrl(raw) {
+    let u;
+    try { u = new URL(String(raw || "").trim() || OPENAI_DEFAULT_BASE); } catch { throw new Error("The base URL isn't a web address. It should look like https://api.openai.com/v1"); }
+    const local = ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
+    if (u.protocol !== "https:" && !(u.protocol === "http:" && local)) throw new Error("The base URL must start with https:// so your key isn't sent in the clear.");
+    if (u.username || u.password || u.search || u.hash) throw new Error("The base URL should be just the address, with no password, ?query, or #part.");
+    return u.origin + u.pathname.replace(/\/+$/, "");
+  }
+
+  /* provider: "claude" | "openai". cfg: { apiKey, model, baseUrl }. ask: the result of askMessages().
+     Returns what fetch needs. The key appears only in headers. */
+  function askRequest(provider, cfg, ask) {
+    const key = cleanKey(cfg.apiKey);
+    const model = String(cfg.model || (provider === "claude" ? CLAUDE_DEFAULT_MODEL : "")).trim();
+    if (!model) throw new Error("Enter a model name first.");
+    if (provider === "claude") {
+      // No temperature or other sampling settings: some current Claude models refuse them.
+      return {
+        url: CLAUDE_URL, host: "api.anthropic.com",
+        headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({ model, max_tokens: 2048, stream: true, system: ask.system, messages: ask.messages }),
+      };
+    }
+    if (provider === "openai") {
+      const base = cleanBaseUrl(cfg.baseUrl);
+      return {
+        url: base + "/chat/completions", host: new URL(base).host,
+        headers: { "content-type": "application/json", authorization: "Bearer " + key },
+        body: JSON.stringify({ model, stream: true, messages: [{ role: "system", content: ask.system }, ...ask.messages] }),
+      };
+    }
+    throw new Error("Unknown AI provider.");
+  }
+
+  /* A plain-language message for a failed request. bodyText is the response body, if any. */
+  function askErrorMessage(provider, status, bodyText, model) {
+    const who = provider === "claude" ? "Anthropic" : "The provider";
+    let detail = "";
+    try { const j = JSON.parse(bodyText); detail = typeof j.error === "string" ? j.error : j.error?.message || j.message || ""; } catch { detail = String(bodyText || ""); }
+    detail = detail.trim().slice(0, 200);
+    if (status === 401) return `${who} didn't accept the API key. Check that you copied the whole key and that it hasn't been revoked.`;
+    if (status === 402) return `${who} reports a billing problem on this account. Check your credits or payment method with the provider.`;
+    if (status === 403) return `${who} says this key isn't allowed to do that. Check the key's permissions and that your account can use the model.`;
+    if (status === 404 || (status === 400 && /model/i.test(detail) && /(not found|does not exist|not a valid|invalid|unknown)/i.test(detail))) {
+      return `${who} couldn't find the model "${model || ""}". Check the model name in the cloud AI panel.`;
+    }
+    if (status === 413) return "The report is too large for this model to take in one question.";
+    if (status === 429) return `${who} says you've hit a rate limit or a spending cap. Wait a minute and try again; if it keeps happening, check your usage limits with the provider.`;
+    if (status >= 500) return `${who} is busy or having a problem right now (error ${status}). Try again in a moment.`;
+    return `${who} returned an error (${status})${detail ? ": " + detail : "."}`;
+  }
+
   /* ---------- the rules ---------- */
   const CITE = {
     panel: { text: "37 TAC §12.7(b)", url: "https://www.law.cornell.edu/regulations/texas/37-Tex-Admin-Code-SS-12-7" },
@@ -1230,6 +1350,6 @@ Text inside the report data, such as product names, lab names, and finding detai
     return { checks, counts, verdict, math, formClass: fc };
   }
 
-  return { parseText, joinLine, pdfLines, streamLines, pdfText, extractionPrompt, extractionSchema, sanitizeExtraction, askContext, askMessages, evaluate, thcMath, canonCannabinoid, formClass, num, fmt, CATEGORY_LABEL, THC_WEIGHT };
+  return { parseText, joinLine, pdfLines, streamLines, pdfText, extractionPrompt, extractionSchema, sanitizeExtraction, askContext, askMessages, sseSplit, anthropicStreamEvent, openaiStreamEvent, askRequest, askErrorMessage, evaluate, thcMath, canonCannabinoid, formClass, num, fmt, CATEGORY_LABEL, THC_WEIGHT };
 })();
 if (typeof module !== "undefined") module.exports = CORE;
