@@ -193,3 +193,51 @@ test("askErrorMessage: plain wording for each failure", () => {
   assert.match(CORE.askErrorMessage("openai", 400, "plain text problem"), /returned an error \(400\): plain text problem/);
   assert.match(CORE.askErrorMessage("openai", 418, ""), /returned an error \(418\)\./);
 });
+
+/* ---------- reading a COA with a cloud model ---------- */
+
+test("readRequest (Claude): images before the prompt, key only in a header", () => {
+  const r = CORE.readRequest("claude", { apiKey: "sk-ant-test", model: "" }, "PROMPT", ["AAA", "BBB"]);
+  assert.equal(r.url, "https://api.anthropic.com/v1/messages");
+  assert.equal(r.headers["x-api-key"], "sk-ant-test");
+  assert.equal(r.headers["anthropic-dangerous-direct-browser-access"], "true");
+  const body = JSON.parse(r.body);
+  assert.equal(body.model, "claude-haiku-5-5");
+  assert.ok(!("stream" in body));
+  const c = body.messages[0].content;
+  assert.deepEqual(c.map((p) => p.type), ["image", "image", "text"]);
+  assert.equal(c[0].source.media_type, "image/jpeg");
+  assert.equal(c[2].text, "PROMPT");
+  assert.ok(!r.body.includes("sk-ant-test") && !r.url.includes("sk-ant-test"));
+});
+
+test("readRequest (OpenAI-compatible): plain text without images, data URLs with them", () => {
+  const cfg = { apiKey: "sk-oa", model: "m", baseUrl: "https://openrouter.ai/api/v1/" };
+  const t = CORE.readRequest("openai", cfg, "PROMPT");
+  assert.equal(t.url, "https://openrouter.ai/api/v1/chat/completions");
+  assert.equal(t.headers.authorization, "Bearer sk-oa");
+  assert.equal(JSON.parse(t.body).messages[0].content, "PROMPT");
+  const i = JSON.parse(CORE.readRequest("openai", cfg, "PROMPT", ["AAA"]).body).messages[0].content;
+  assert.equal(i[0].text, "PROMPT");
+  assert.equal(i[1].image_url.url, "data:image/jpeg;base64,AAA");
+  assert.throws(() => CORE.readRequest("openai", { ...cfg, baseUrl: "http://example.com/v1" }, "P"), /https/);
+  assert.throws(() => CORE.readRequest("claude", { apiKey: "" }, "P"), /API key/);
+});
+
+test("readResponseText: text, cut-offs, and refusals from both providers", () => {
+  assert.deepEqual(CORE.readResponseText("claude", { content: [{ type: "thinking", thinking: "x" }, { type: "text", text: "{\"a\":1}" }], stop_reason: "end_turn" }),
+    { text: "{\"a\":1}", truncated: false, refusal: false });
+  assert.equal(CORE.readResponseText("claude", { content: [{ type: "text", text: "{" }], stop_reason: "max_tokens" }).truncated, true);
+  assert.equal(CORE.readResponseText("claude", { content: [], stop_reason: "refusal" }).refusal, true);
+  assert.equal(CORE.readResponseText("openai", { choices: [{ message: { content: "{}" }, finish_reason: "stop" }] }).text, "{}");
+  assert.equal(CORE.readResponseText("openai", { choices: [{ message: { content: "{" }, finish_reason: "length" }] }).truncated, true);
+  assert.equal(CORE.readResponseText("openai", { choices: [{ message: { content: null, refusal: "no" }, finish_reason: "stop" }] }).refusal, true);
+});
+
+test("looseJson: plain, fenced, wrapped, and broken answers", () => {
+  assert.deepEqual(CORE.looseJson("{\"a\":1}"), { a: 1 });
+  assert.deepEqual(CORE.looseJson("```json\n{\"a\":1}\n```"), { a: 1 });
+  assert.deepEqual(CORE.looseJson("Here it is: {\"a\":{\"b\":2}} Thanks."), { a: { b: 2 } });
+  assert.equal(CORE.looseJson("no data"), null);
+  assert.equal(CORE.looseJson("{\"a\":"), null);
+});

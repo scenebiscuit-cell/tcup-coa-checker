@@ -9,14 +9,14 @@
 <meta property="og:title" content="TCUP COA Checker">
 <meta property="og:description" content="Checks a lab COA against Texas Compassionate Use Program rules, with a citation for every finding.">
 <meta property="og:image" content="docs/screenshot-desktop.png">
-<link rel="icon" href="favicon.svg?v=2026-11-03b" type="image/svg+xml">
-<link rel="icon" href="favicon-32.png?v=2026-11-03b" type="image/png" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026-11-03b">
+<link rel="icon" href="favicon.svg?v=2026-11-03c" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png?v=2026-11-03c" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2026-11-03c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Michroma&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="src/styles.css?v=2026-11-03b">
-<link rel="stylesheet" href="src/retro.css?v=2026-11-03b">
+<link rel="stylesheet" href="src/styles.css?v=2026-11-03c">
+<link rel="stylesheet" href="src/retro.css?v=2026-11-03c">
 </head>
 <body>
 
@@ -113,7 +113,7 @@
         <span>Or drop a PDF or text file, or</span>
         <button type="button" class="linkbtn" id="pick">choose a file</button>
         <span id="attached"></span>
-        <p class="drop-note">Photos and scanned PDFs need an AI model to read them: open <b>Use a local AI model</b> below.</p>
+        <p class="drop-note">Photos and scanned PDFs need an AI model that reads images: connect a vision model under <b>Use a local AI model</b>, or turn on <b>Read COAs with</b> under <b>Use a cloud AI model</b>.</p>
       </div>
       <form class="fetch" id="fetchForm" hidden>
         <label class="lbl" for="url">Or fetch from a COA link</label>
@@ -141,7 +141,7 @@
       <details class="localai" id="cloudBox">
         <summary><span class="ltitle">Use a cloud AI model</span><span class="lstate" id="cloudState">Off</span></summary>
         <div class="localbody">
-          <p class="fetchnote">Answers questions in the <b>Ask about this result</b> box with Claude, or with OpenAI or any OpenAI-compatible service such as OpenRouter. It uses your own API key (a secret code from the AI company that lets this page use your account), so charges go to your account. Nothing goes to a server of ours. Pick which one answers in the Ask box.</p>
+          <p class="fetchnote">Reads COAs, including photos and scanned PDFs, and answers questions in the <b>Ask about this result</b> box with Claude, or with OpenAI or any OpenAI-compatible service such as OpenRouter. It uses your own API key (a secret code from the AI company that lets this page use your account), so charges go to your account. Nothing goes to a server of ours. Pick which one answers in the Ask box.</p>
           <fieldset class="cloudset">
             <legend>Claude (Anthropic)</legend>
             <div class="localrow">
@@ -157,9 +157,15 @@
             </div>
             <div class="field"><label for="openaiBase">Base URL</label><input id="openaiBase" type="url" inputmode="url" autocomplete="off" spellcheck="false" value="https://api.openai.com/v1"></div>
           </fieldset>
+          <div class="field"><label for="cloudRead">Read COAs with</label>
+            <select id="cloudRead" class="wide">
+              <option value="off">Off: the built-in parser or local model reads them</option>
+              <option value="claude">Claude</option>
+              <option value="openai">OpenAI-compatible</option>
+            </select></div>
           <label class="toggle" for="cloudRemember"><input type="checkbox" id="cloudRemember"> Remember on this device</label>
           <p class="fetchnote">Off by default: keys stay in this tab's memory and are gone when you close or reload it. If you turn this on, the keys are saved in this browser's storage in plain text. Don't use it on a shared or public computer.</p>
-          <p class="fetchnote cloudnotice">When you ask a question with a cloud AI, your question, this report, and the COA's results are sent to that provider under your account. Their usage charges apply. Keys are sent only to the provider you pick. Cloud models answer questions only; reading photos and scans still needs a local vision model.</p>
+          <p class="fetchnote cloudnotice">When a cloud AI reads a COA, the COA's text or images are sent to that provider. When you ask a question, your question, this report, and the COA's results are sent. Both go under your account. Their usage charges apply. Keys are sent only to the provider you pick.</p>
           <div class="status" id="cloudStatus" role="status" aria-live="polite"></div>
         </div>
       </details>
@@ -219,9 +225,9 @@
   </footer>
 </main>
 
-<script src="src/header-art.js?v=2026-11-03b"></script>
-<script src="src/core.js?v=2026-11-03b"></script>
-<script src="src/samples.js?v=2026-11-03b"></script>
-<script src="src/app.js?v=2026-11-03b"></script>
+<script src="src/header-art.js?v=2026-11-03c"></script>
+<script src="src/core.js?v=2026-11-03c"></script>
+<script src="src/samples.js?v=2026-11-03c"></script>
+<script src="src/app.js?v=2026-11-03c"></script>
 </body>
 </html>

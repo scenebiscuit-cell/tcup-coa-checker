@@ -138,15 +138,21 @@
 
   function imageReader() {
     if (useOllama() && state.local.vision) return "local";
+    if (useCloudRead()) return "cloud";   // Claude and most OpenAI-compatible models read images
     if (state.sample && state.canImages) return "claude";
     return null;
   }
-  function readerName() { return imageReader() === "local" ? state.local.model : "Claude"; }
+  function readerName() { const r = imageReader(); return r === "local" ? state.local.model : r === "cloud" ? cloudConfig(useCloudRead()).model : "Claude"; }
+  // the cloud provider picked under "Read COAs with" in the cloud panel, once its key and model are filled in
+  function useCloudRead() { const w = $("cloudRead").value; return w !== "off" && askReady(w) ? w : null; }
   function useOllama() { return !!state.local && $("useLocal").checked; }
 
   function refreshRunLabel() {
     if (useOllama()) {
       $("run").textContent = `Read with ${state.local.model} and check`;
+      $("runLocal").hidden = false;
+    } else if (useCloudRead()) {
+      $("run").textContent = `Read with ${cloudConfig(useCloudRead()).model} and check`;
       $("runLocal").hidden = false;
     } else if (state.sample) {
       $("run").textContent = "Read with Claude and check";
@@ -339,7 +345,7 @@
   }
 
   /* ---------- cloud AI panel: keys stay in this tab unless "Remember on this device" is on ---------- */
-  const CLOUD_FIELDS = ["claudeKey", "claudeModel", "openaiKey", "openaiModel", "openaiBase"];
+  const CLOUD_FIELDS = ["claudeKey", "claudeModel", "openaiKey", "openaiModel", "openaiBase", "cloudRead"];
   function saveCloud() { for (const id of CLOUD_FIELDS) store.set("cloud." + id, $(id).value); store.set("cloud.remember", "1"); }
   function forgetCloud() { for (const id of CLOUD_FIELDS) store.remove("cloud." + id); store.remove("cloud.remember"); }
   function updateCloudState() {
@@ -354,7 +360,7 @@
   updateCloudState();
   for (const id of CLOUD_FIELDS) $(id).addEventListener("input", () => {
     if ($("cloudRemember").checked) saveCloud();
-    updateCloudState(); updateAsk();
+    updateCloudState(); refreshRunLabel();   // refreshRunLabel also updates the Ask box
   });
   $("cloudRemember").onchange = () => {
     const el = $("cloudStatus"); el.classList.remove("err");
@@ -483,7 +489,7 @@
     const type = f.type || "";
     try {
       if (/^image\//.test(type)) {
-        if (!imageReader()) { $("coa").value = ""; state.sampleText = null; setStatus("Reading photos needs a vision model. Connect a local vision model such as qwen2.5vl under \"Use a local AI model,\" or paste the COA text instead.", true); return; }
+        if (!imageReader()) { $("coa").value = ""; state.sampleText = null; setStatus("Reading photos needs an AI model that reads images. Connect a local vision model such as qwen2.5vl under \"Use a local AI model,\" turn on reading under \"Use a cloud AI model,\" or paste the COA text instead.", true); return; }
         state.images = [f]; state.fileName = f.name;
         $("coa").value = ""; state.sampleText = null;
         showAttachment(f.name);
@@ -510,9 +516,9 @@
         } else {
           // scanned PDF: render pages to images for Claude
           // clear the old text first, so checking can't run on the previous COA or sample by mistake
-          if (!imageReader()) { $("coa").value = ""; state.sampleText = null; state.scanFail = f.name; clearReport(`${f.name} couldn't be read, so there's no report yet.`); setStatus("This PDF is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model such as qwen2.5vl, or paste the COA text instead.", true); return; }
+          if (!imageReader()) { $("coa").value = ""; state.sampleText = null; state.scanFail = f.name; clearReport(`${f.name} couldn't be read, so there's no report yet.`); setStatus("This PDF is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model such as qwen2.5vl, turn on reading under \"Use a cloud AI model,\" or paste the COA text instead.", true); return; }
           const lim = imageReader() === "claude" ? await state.sample.limits().catch(() => null) : null;
-          const max = Math.min(doc.numPages, lim?.images?.maxCount || 3);
+          const max = Math.min(doc.numPages, imageReader() === "cloud" ? 5 : lim?.images?.maxCount || 3);
           const blobs = [];
           for (let i = 1; i <= max; i++) {
             const page = await doc.getPage(i);
@@ -543,12 +549,12 @@
     const text = $("coa").value.trim();
     state.chosen = true;
     // unchanged sample text reloads instantly, unless a local model is on: then the model reads it too, for comparison
-    if (state.sampleId && text === state.sampleText.trim() && !useOllama()) { loadSample(state.sampleId); return; }
+    if (state.sampleId && text === state.sampleText.trim() && !useOllama() && !useCloudRead()) { loadSample(state.sampleId); return; }
     if (!text && !state.images.length) {
-      setStatus(state.scanFail ? `${state.scanFail} is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model, or paste the COA text instead.` : "Paste COA text or attach a file first.", true);
+      setStatus(state.scanFail ? `${state.scanFail} is a scan with no text layer, so the built-in parser can't read it. Connect a local vision model, turn on reading under "Use a cloud AI model," or paste the COA text instead.` : "Paste COA text or attach a file first.", true);
       return;
     }
-    if (useOllama()) runOllama(text); else if (state.sample) runClaude(text); else runLocal();
+    if (useOllama()) runOllama(text); else if (useCloudRead()) runCloudRead(text); else if (state.sample) runClaude(text); else runLocal();
   };
   $("stop").onclick = () => state.ctl?.abort();
 
@@ -559,6 +565,44 @@
     const found = d.cannabinoids.length + d.panels.length;
     showData(d, "Built-in parser");
     setStatus(found ? `Parsed ${d.cannabinoids.length} cannabinoid rows and ${d.panels.length} test panels.` : "The built-in parser didn't recognize this layout." + (state.sample || state.local ? " Try the AI reader." : " Connecting a local AI model under \"Use a local AI model\" reads any layout."), !found);
+  }
+
+  // the visitor's own cloud key reads the COA text or images with the same extraction prompt as the local model
+  async function runCloudRead(text) {
+    const w = useCloudRead(), cfg = cloudConfig(w), who = providerName(w);
+    const busy = (on) => { $("run").disabled = on; $("runLocal").disabled = on; $("stop").hidden = !on; };
+    state.ctl = new AbortController();
+    busy(true);
+    const started = Date.now();
+    const tick = setInterval(() => setStatus(`${cfg.model} is reading the COA… ${Math.round((Date.now() - started) / 1000)}s. This usually takes 15–60 seconds.`), 1000);
+    try {
+      const imgs = state.images.length ? await Promise.all(state.images.map(b => toBase64Scaled(b))) : [];
+      const body = text ? text.slice(0, 60000) : `(The COA is in the attached image${imgs.length > 1 ? "s" : ""}. Read it from the image${imgs.length > 1 ? "s" : ""}.)`;
+      const req = CORE.readRequest(w, cfg, CORE.extractionPrompt(body), imgs);   // throws a plain-language Error for a missing key or unsafe address
+      let resp;
+      try {
+        resp = await fetch(req.url, { method: "POST", headers: req.headers, body: req.body, signal: state.ctl.signal, credentials: "omit", referrerPolicy: "no-referrer" });
+      } catch (e) {
+        if (e.name === "AbortError") throw e;
+        throw new Error(`Your browser couldn't reach ${req.host}. Check your internet connection and the address. If both are right, the service may not allow requests made straight from a web page (a CORS block), and this site can't work around that.`);
+      }
+      if (!resp.ok) {
+        const t = (await resp.text()).slice(0, 2000);
+        if (resp.status === 413) throw new Error("This COA is too large to send in one request. Paste the potency and contaminant pages only.");
+        if (resp.status === 400 && imgs.length && /image/i.test(t)) throw new Error(`${cfg.model} couldn't take the image${imgs.length > 1 ? "s" : ""}. Pick a model that reads images, or paste the COA text.`);
+        throw new Error(CORE.askErrorMessage(w, resp.status, t, cfg.model));
+      }
+      const r = CORE.readResponseText(w, await resp.json());
+      if (r.refusal) throw new Error(`${cfg.model} declined to read this document.`);
+      if (r.truncated) throw new Error(`${cfg.model}'s answer hit the length limit before the data was complete. Paste the potency and contaminant pages only, or try a larger model.`);
+      const raw = CORE.looseJson(r.text);
+      if (!raw) throw new Error(`${cfg.model}'s answer couldn't be read as data. Try again, or try a larger model.`);
+      const d = CORE.sanitizeExtraction(raw);
+      showData(d, `Read by ${cfg.model} · ${who}`);
+      setStatus(`${cfg.model} extracted ${d.cannabinoids.length} cannabinoid rows and ${d.panels.length} test panels in ${Math.round((Date.now() - started) / 1000)}s. Compare the "Lab results as read" table to the COA before relying on the verdict.`);
+    } catch (e) {
+      setStatus(e?.name === "AbortError" ? "Stopped." : scrubKeys(e?.message || "The cloud model couldn't read this COA."), e?.name !== "AbortError");
+    } finally { clearInterval(tick); busy(false); }
   }
 
   async function runClaude(text) {

@@ -44,7 +44,7 @@ The design keeps reading and judging apart. Reading a COA is the hard, fuzzy par
 - **`src/core.js`** has the COA parser and the rules engine. No state standardizes the COA layout, so the parser looks for patterns that recur across labs: "Label: value" fields (two to a line, or the value on the next line), pass/fail status under each test name, summary rows and grids, sideways cannabinoid tables, row tables with LOD/LOQ and several result columns, units in column headers, single-spaced text copied from a PDF viewer, CSV exports, and chemical names as well as abbreviations. These are pure functions with no DOM access, so they're easy to test. All pass/fail decisions are deterministic code, so the same COA always gets the same verdict.
 - **`src/app.js`** is the interface: sample loading, PDF text extraction with pdf.js, the optional local-model reader, editable product details, and the report.
 - **`src/samples.js`** has three fictional COAs that exercise the clear, review, and hold paths.
-- **`tests/`** has 44 unit tests for the THC math, the Ask box prompt and cloud requests, unit conversion, each sample's verdict, rebuilding PDF text, and fictional COAs in eight real-lab layouts (`tests/fixtures/`).
+- **`tests/`** has 48 unit tests for the THC math, the Ask box prompt and cloud requests, unit conversion, each sample's verdict, rebuilding PDF text, and fictional COAs in eight real-lab layouts (`tests/fixtures/`).
 
 The public demo runs entirely in the browser, and nothing is uploaded. It accepts COA PDFs that contain text (most lab-issued PDFs) and extracts the text with pdf.js. Scanned or photographed COAs have no text layer and need the AI version. A version of this tool runs inside Claude, where an AI model reads unfamiliar COA layouts, scanned PDFs, and photos into the same structured fields. The rules engine still makes every compliance call.
 
@@ -76,9 +76,11 @@ The page sends the COA text and a JSON schema to Ollama's `/api/chat`, streams t
 
 Once a model is connected, **Ask about this result** under the report answers plain-language questions ("Why is this a hold?") using only this report and the TCUP limits, with the rule source for each answer. With a local model, the question and report go only to Ollama on your computer.
 
-## Use a cloud AI model for questions
+## Use a cloud AI model
 
-Open **Use a cloud AI model** and paste your own API key for Claude (Anthropic) or any OpenAI-compatible service (OpenAI, OpenRouter, …), then pick it under **Answer with** in the Ask box. The browser sends the question and report straight to that provider under your account; there's no server in between. Keys stay in the tab's memory unless you turn on **Remember on this device**. Cloud models answer questions only: reading photos and scans still needs a local vision model.
+Open **Use a cloud AI model** and paste your own API key for Claude (Anthropic) or any OpenAI-compatible service (OpenAI, OpenRouter, …), then pick it under **Answer with** in the Ask box. The browser sends the question and report straight to that provider under your account; there's no server in between. Keys stay in the tab's memory unless you turn on **Remember on this device**.
+
+To have the cloud model read COAs too, including photos and scanned PDFs (up to 5 pages), set **Read COAs with** in the panel. The COA's text or page images then go to that provider. A connected local model still takes priority.
 
 ## Continue development
 
