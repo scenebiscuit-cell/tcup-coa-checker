@@ -23,9 +23,9 @@ The owner knows HTML and CSS well and is still learning JavaScript. Explain Java
 
 | File | What it holds | Notes |
 |---|---|---|
-| `src/core.js` | Parser (`parseText`, `joinLine`), AI extraction prompt and schema, THC math (`thcMath`), Texas rules engine (`evaluate`) and its `CITE` table | Pure functions, no DOM. Exports `CORE` for the browser and Node. |
+| `src/core.js` | Parser (`parseText`, `joinLine`), AI extraction prompt and schema, the "Ask about this result" prompt (`askContext`, `askMessages`), THC math (`thcMath`), Texas rules engine (`evaluate`) and its `CITE` table | Pure functions, no DOM. The ask helpers sit after the shared parser block, so they aren't synced to coa-crosscheck. Exports `CORE` for the browser and Node. |
 | `src/samples.js` | Fictional sample COAs for the sample buttons | |
-| `src/app.js` | The interface: file upload with pdf.js, local Ollama reader, report rendering | The only file that touches the DOM. |
+| `src/app.js` | The interface: file upload with pdf.js, local Ollama reader, the Ask box (local Ollama), report rendering | The only file that touches the DOM. |
 | `src/styles.css` | All styles, with color tokens on `:root` and dark-mode overrides | |
 | `tests/*.test.js` | Unit tests run with `node --test` | |
 | `tests/fixtures/` | Fictional COAs, one per lab layout | |
