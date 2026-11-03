@@ -241,3 +241,8 @@ test("looseJson: plain, fenced, wrapped, and broken answers", () => {
   assert.equal(CORE.looseJson("no data"), null);
   assert.equal(CORE.looseJson("{\"a\":"), null);
 });
+
+test("askErrorMessage: an Anthropic key without a workspace gets its own advice", () => {
+  const body = JSON.stringify({ type: "error", error: { type: "invalid_request_error", message: "This API key is not scoped to a workspace, so this request must include the anthropic-workspace-id header with the ID of the workspace to use." } });
+  assert.match(CORE.askErrorMessage("claude", 400, body, "claude-haiku-5-5"), /pick a single workspace/);
+});

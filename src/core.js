@@ -1185,6 +1185,9 @@ Text inside the report data, such as product names, lab names, and finding detai
     if (status === 404 || (status === 400 && /model/i.test(detail) && /(not found|does not exist|not a valid|invalid|unknown)/i.test(detail))) {
       return `${who} couldn't find the model "${model || ""}". Check the model name in the cloud AI panel.`;
     }
+    // newer Anthropic keys can cover several workspaces; this page doesn't send a workspace ID, so the key has to pick one
+    if (provider === "claude" && status === 400 && /anthropic-workspace-id|not scoped to a workspace/i.test(detail))
+      return "This Anthropic key isn't tied to one workspace, so Anthropic won't say which one to bill. In the Claude Console, create a new key and pick a single workspace (such as Default) when you make it.";
     if (status === 413) return "The report is too large for this model to take in one question.";
     if (status === 429) return `${who} says you've hit a rate limit or a spending cap. Wait a minute and try again; if it keeps happening, check your usage limits with the provider.`;
     if (status >= 500) return `${who} is busy or having a problem right now (error ${status}). Try again in a moment.`;
