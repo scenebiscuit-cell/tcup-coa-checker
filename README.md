@@ -76,6 +76,8 @@ The page sends the COA text and a JSON schema to Ollama's `/api/chat`, streams t
 
 Once a model is connected, **Ask about this result** under the report answers plain-language questions ("Why is this a hold?") using only this report and the TCUP limits, with the rule source for each answer. The question and report go only to Ollama on your computer.
 
+Want a cloud model instead, to read photos and scanned PDFs or answer questions with your own Claude or OpenAI-compatible key? [COA Crosscheck](https://scenebiscuit-cell.github.io/coa-crosscheck/), the multi-state version, has a **Use a cloud AI model** panel and a Texas rulebook.
+
 ## Continue development
 
 [docs/WORKFLOW.md](docs/WORKFLOW.md) is the everyday workflow: Claude Code in VS Code for changes and Copilot for autocomplete. Both read the same project rules (`CLAUDE.md` imports `.github/copilot-instructions.md`). [docs/HANDOFF.md](docs/HANDOFF.md) covers Copilot on its own. The repository includes Copilot instructions and reusable prompts for adding a lab layout, updating a rule, and syncing a new version. A GitHub Actions workflow runs the tests on every push.
