@@ -1,5 +1,7 @@
 # TCUP COA Checker
 
+[![Tests](https://github.com/scenebiscuit-cell/tcup-coa-checker/actions/workflows/test.yml/badge.svg)](https://github.com/scenebiscuit-cell/tcup-coa-checker/actions/workflows/test.yml)
+
 **Live demo:** https://scenebiscuit-cell.github.io/tcup-coa-checker/
 
 A browser tool that reads a cannabis lab **certificate of analysis (COA)** and checks it against the rules of the **Texas Compassionate Use Program (TCUP)**, the state's medical cannabis program. Every finding links to the statute or rule it comes from.
@@ -45,6 +47,8 @@ The design keeps reading and judging apart. Reading a COA is the hard, fuzzy par
 - **`src/app.js`** is the interface: sample loading, PDF text extraction with pdf.js, the optional local-model reader, editable product details, and the report.
 - **`src/samples.js`** has three fictional COAs that exercise the clear, review, and hold paths.
 - **`tests/`** has 33 unit tests for the THC math, the Ask box prompt, unit conversion, each sample's verdict, rebuilding PDF text, and fictional COAs in eight real-lab layouts (`tests/fixtures/`).
+
+**Tested on real COAs.** The parser is shared with [COA Crosscheck](https://github.com/scenebiscuit-cell/coa-crosscheck). In October 2026 it was checked against 12 real COAs from 8 labs: the built-in parser went from reading potency correctly on 0 of the 9 text-based PDFs to 9 of 9. Scanned PDFs need a vision model. Details are in that repository's [docs/VERIFY.md](https://github.com/scenebiscuit-cell/coa-crosscheck/blob/main/docs/VERIFY.md#results). No real COA is committed; each layout has a fictional copy in `tests/fixtures/`.
 
 The public demo runs entirely in the browser, and nothing is uploaded. It accepts COA PDFs that contain text (most lab-issued PDFs) and extracts the text with pdf.js. Scanned or photographed COAs have no text layer and need the AI version. A version of this tool runs inside Claude, where an AI model reads unfamiliar COA layouts, scanned PDFs, and photos into the same structured fields. The rules engine still makes every compliance call.
 
