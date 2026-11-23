@@ -4,7 +4,7 @@ Read this before changing anything in this repository.
 
 ## What this project is
 
-A static web page that checks a cannabis lab **certificate of analysis (COA)** against the rules of the **Texas Compassionate Use Program (TCUP)** and gives a verdict (Clear, Review, or Hold). Every finding cites the statute or rule it comes from. It's a portfolio project by Nick Lax, hosted on GitHub Pages at https://scenebiscuit-cell.github.io/tcup-coa-checker/. It is not legal advice. A multi-state version lives in `scenebiscuit-cell/coa-crosscheck`.
+A static web page that checks a cannabis lab **certificate of analysis (COA)** against the rules of the **Texas Compassionate Use Program (TCUP)** and gives a verdict (Clear, Review, or Hold). Every finding cites the statute or rule it comes from. It's a portfolio project by Nick Lax, hosted on GitHub Pages at https://scenebiscuit.com/tcup-coa-checker/. It is not legal advice. A multi-state version lives in `scenebiscuit-cell/coa-crosscheck`.
 
 The owner knows HTML and CSS well and is still learning JavaScript. Explain JavaScript changes in plain language, keep them small, and do one testable step at a time. He works on Windows, so give PowerShell commands.
 
