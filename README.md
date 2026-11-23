@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/scenebiscuit-cell/tcup-coa-checker/actions/workflows/test.yml/badge.svg)](https://github.com/scenebiscuit-cell/tcup-coa-checker/actions/workflows/test.yml)
 
-**Live demo:** https://scenebiscuit-cell.github.io/tcup-coa-checker/
+**Live demo:** https://scenebiscuit.com/tcup-coa-checker/
 
 A browser tool that reads a cannabis lab **certificate of analysis (COA)** and checks it against the rules of the **Texas Compassionate Use Program (TCUP)**, the state's medical cannabis program. Every finding links to the statute or rule it comes from.
 
@@ -71,16 +71,16 @@ The built-in parser covers simple and common lab layouts. For any layout, includ
    ```
 2. Allow the site to reach Ollama. This step isn't needed when you run the page from `http://localhost`. On Windows, in PowerShell:
    ```powershell
-   setx OLLAMA_ORIGINS "https://scenebiscuit-cell.github.io"
+   setx OLLAMA_ORIGINS "https://scenebiscuit.com"
    ```
-   Then quit Ollama from the system tray and start it again. On macOS: `launchctl setenv OLLAMA_ORIGINS "https://scenebiscuit-cell.github.io"`, then restart Ollama.
+   Then quit Ollama from the system tray and start it again. On macOS: `launchctl setenv OLLAMA_ORIGINS "https://scenebiscuit.com"`, then restart Ollama.
 3. On the page, open **Use a local AI model** and click **Connect**. If the browser asks to let the site reach apps on this device, allow it.
 
 The page sends the COA text and a JSON schema to Ollama's `/api/chat`, streams the answer, and runs the same rules engine on the result. Reading time depends on your GPU and how many results the COA lists; the page shows progress as the model writes. Smaller local models misread more often than large hosted ones, which is why the self-checks and the "Lab results as read" table matter.
 
 Once a model is connected, **Ask about this result** under the report answers plain-language questions ("Why is this a hold?") using only this report and the TCUP limits, with the rule source for each answer. The question and report go only to Ollama on your computer.
 
-Want a cloud model instead, to read photos and scanned PDFs or answer questions with your own Claude or OpenAI-compatible key? [COA Crosscheck](https://scenebiscuit-cell.github.io/coa-crosscheck/), the multi-state version, has a **Use a cloud AI model** panel and a Texas rulebook.
+Want a cloud model instead, to read photos and scanned PDFs or answer questions with your own Claude or OpenAI-compatible key? [COA Crosscheck](https://scenebiscuit.com/coa-crosscheck/), the multi-state version, has a **Use a cloud AI model** panel and a Texas rulebook.
 
 ## Continue development
 
