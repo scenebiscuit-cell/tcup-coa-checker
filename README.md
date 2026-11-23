@@ -112,4 +112,4 @@ This is a portfolio prototype, not legal advice or a substitute for Texas DPS gu
 
 ---
 
-Created by **Nick Lax** · nlaxatx@gmail.com · MIT License
+Created by **Nick Lax** · nlaxatx@gmail.com · © 2026 Nick Lax. All rights reserved: you're welcome to read the code, but please ask before reusing it.
