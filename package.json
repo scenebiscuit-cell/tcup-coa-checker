@@ -4,7 +4,7 @@
   "description": "Checks a cannabis lab certificate of analysis (COA) against Texas Compassionate Use Program rules, with a citation for every finding.",
   "private": true,
   "author": "Nick Lax",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "scripts": {
     "test": "node --test"
   },
